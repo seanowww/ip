@@ -12,7 +12,7 @@ public class Boyd {
         String chatbotName = "Boyd";
         String line = "____________________________________________________________";
         System.out.println(line);
-        System.out.println("Hello! I'm Boyd!\nWhat can I do for you?");
+        System.out.println("Hello! I'm " + chatbotName + "!\nWhat can I do for you?");
         System.out.println(line);
         System.out.println("Bye. Hope to see you again soon!");
         System.out.println(line);
