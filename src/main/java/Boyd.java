@@ -1,21 +1,15 @@
 import Tasks.Task;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import exceptions.*;
 
 public class Boyd {
-    private static Task[] mem = new Task[100];
-    private static int itemCount = 0;
+    private static List<Task> mem = new ArrayList<>();
     private static String line = "____________________________________________________________";
     private static String chatbotName = "Boyd";
 
     public static void main(String[] args) {
-        /*String logo = " ____        _        \n"
-                + "|  _ \\ _   _| | _____ \n"
-                + "| | | | | | | |/ / _ \\\n"
-                + "| |_| | |_| |   <  __/\n"
-                + "|____/ \\__,_|_|\\_\\___|\n";
-        System.out.println("Hello from\n" + logo);*/
         greet();
         echo();
     }
@@ -33,65 +27,91 @@ public class Boyd {
     }
 
     public static void echo() {
-        String chatbotName = "Boyd";
         Scanner scanner = new Scanner(System.in);
-        String command = "";
+        String command;
+
         while (true) {
             command = scanner.nextLine();
-            if (command.equalsIgnoreCase("bye")) {
-                break;
-            }
+            if (command.equalsIgnoreCase("bye")) break;
+
             try {
+                // mark <number>
                 if (command.startsWith("mark")) {
-                    if (command.length() == 6) {
-                        int itemNo = Integer.parseInt(command.substring(5)); //convert to integer
-                        if (itemNo > itemCount) {
-                            throw new BoydException("Invalid item number!");
-                        }
-                        if (itemCount == 0) {
-                            throw new BoydException("No items yet!");
-                        }
-                        mem[itemNo - 1].markAsDone();
-                        System.out.println(line);
-                        String message = "Nice! I've marked this task as done:\n" + mem[itemNo - 1].getDescription();
-                        System.out.println(message);
-                        System.out.println(line);
-                    } else {
+                    if (!command.startsWith("mark ")) {
                         throw new BoydException("Command should be of the format: \"mark <number>\"");
                     }
+                    int itemNo = Integer.parseInt(command.substring(5).trim());
+                    if (itemNo <= 0 || itemNo > mem.size()) {
+                        throw new BoydException("Invalid item number!");
+                    }
+                    if (mem.isEmpty()) {
+                        throw new BoydException("No items yet!");
+                    }
+
+                    mem.get(itemNo - 1).markAsDone();
+                    System.out.println(line);
+                    System.out.println("Nice! I've marked this task as done:\n" +
+                            "  " + mem.get(itemNo - 1).getDescription());
+                    System.out.println(line);
                     continue;
                 }
+
+                // delete <number>
+                if (command.startsWith("delete")) {
+                    if (!command.startsWith("delete ")) {
+                        throw new BoydException("Command should be of the format: \"delete <number>\"");
+                    }
+                    int itemNo = Integer.parseInt(command.substring(7).trim());
+                    if (itemNo <= 0 || itemNo > mem.size()) {
+                        throw new BoydException("Invalid item number!");
+                    }
+                    if (mem.isEmpty()) {
+                        throw new BoydException("No items yet!");
+                    }
+
+                    String taskDescription = mem.get(itemNo - 1).getDescription();
+                    mem.remove(itemNo - 1);
+                    System.out.println(line);
+                    System.out.println("Noted! I've removed this task:\n" +
+                            "  " + taskDescription + "\n" +
+                            "Now you have " + mem.size() + " tasks in this list.");
+                    System.out.println(line);
+                    continue;
+                }
+
+                // list
                 if (command.equalsIgnoreCase("list")) {
                     System.out.println(line);
-                    if (itemCount == 0) {
+                    if (mem.isEmpty()) {
                         throw new BoydException("You haven't added any items!");
                     }
-                    for (int i = 0; i < itemCount; i++) {
-                        System.out.println((i + 1) + ". " + mem[i].getDescription());
+                    for (int i = 0; i < mem.size(); i++) {
+                        System.out.println((i + 1) + ". " + mem.get(i).getDescription());
                     }
                     System.out.println(line);
                     continue;
                 }
+
+                // add task
                 Task task = TaskFactory.parseTask(command);
-                mem[itemCount] = task;
+                mem.add(task);
                 System.out.println(line);
-                itemCount++;
                 System.out.println("Got it! Added:\n  " + task.getDescription() + "\n" +
-                        "Now you have " + itemCount + " tasks in this list.");
+                        "Now you have " + mem.size() + " tasks in this list.");
                 System.out.println(line);
+
             } catch (BoydException e) {
                 System.out.println(line);
                 System.out.println("Error: " + e.getMessage());
                 System.out.println("Please try again.");
                 System.out.println(line);
             } catch (NumberFormatException e) {
-                // handles invalid number parsing
                 System.out.println(line);
-                System.out.println("Error: You must enter a valid number after 'mark'.");
+                System.out.println("Error: You must enter a valid number after 'mark' or 'delete'.");
                 System.out.println("Please try again.");
                 System.out.println(line);
             }
-            bye();
         }
+        bye();
     }
 }
