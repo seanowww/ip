@@ -1,3 +1,5 @@
+import Tasks.Task;
+
 import java.util.Scanner;
 
 public class Boyd {
@@ -78,11 +80,13 @@ public class Boyd {
                 System.out.println(line);
                 continue;
             }
-            mem[itemCount] = new Task(command);
-            System.out.println(line);
-            System.out.println("added: " + command);
+            Task task = TaskFactory.parseTask(command);
+            mem[itemCount] = task;
             System.out.println(line);
             itemCount++;
+            System.out.println("Got it! Added: \n  " + task.getDescription() + "\n" +
+                    "Now you have " + itemCount + " tasks in this list.");
+            System.out.println(line);
         }
         bye();
     }
