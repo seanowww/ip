@@ -1,6 +1,7 @@
 import Tasks.Task;
 
 import java.util.Scanner;
+import exceptions.*;
 
 public class Boyd {
     private static Task[] mem = new Task[100];
@@ -26,7 +27,6 @@ public class Boyd {
     }
 
     public static void bye() {
-        String line = "____________________________________________________________";
         System.out.println(line);
         System.out.println("Bye. Hope to see you again soon!");
         System.out.println(line);
@@ -41,53 +41,57 @@ public class Boyd {
             if (command.equalsIgnoreCase("bye")) {
                 break;
             }
-            if (command.startsWith("mark")) {
-                if (command.length() == 6) {
-                    int itemNo = Integer.parseInt(command.substring(5)); //convert to integer
-                    if (itemNo > itemCount) {
+            try {
+                if (command.startsWith("mark")) {
+                    if (command.length() == 6) {
+                        int itemNo = Integer.parseInt(command.substring(5)); //convert to integer
+                        if (itemNo > itemCount) {
+                            throw new BoydException("Invalid item number!");
+                        }
+                        if (itemCount == 0) {
+                            throw new BoydException("No items yet!");
+                        }
+                        mem[itemNo - 1].markAsDone();
                         System.out.println(line);
-                        System.out.println("Invalid item number");
+                        String message = "Nice! I've marked this task as done:\n" + mem[itemNo - 1].getDescription();
+                        System.out.println(message);
                         System.out.println(line);
-                        continue;
+                    } else {
+                        throw new BoydException("Command should be of the format: \"mark <number>\"");
                     }
-                    if (itemCount == 0) {
-                        System.out.println(line);
-                        System.out.println("No items yet!");
-                        System.out.println(line);
-                    }
-                    mem[itemNo - 1].markAsDone();
-                    System.out.println(line);
-                    String message = "Nice! I've marked this task as done:\n" + mem[itemNo - 1].getDescription();
-                    System.out.println(message);
-                    System.out.println(line);
-                } else {
-                    System.out.println(line);
-                    System.out.println("Command should be of the format: \"mark <number>\"");
-                    System.out.println(line);
+                    continue;
                 }
-                continue;
-            }
-            if (command.equalsIgnoreCase("list")) {
-                System.out.println(line);
-                if (itemCount == 0) {
-                    System.out.println("You haven't added any items!");
+                if (command.equalsIgnoreCase("list")) {
+                    System.out.println(line);
+                    if (itemCount == 0) {
+                        throw new BoydException("You haven't added any items!");
+                    }
+                    for (int i = 0; i < itemCount; i++) {
+                        System.out.println((i + 1) + ". " + mem[i].getDescription());
+                    }
                     System.out.println(line);
                     continue;
                 }
-                for (int i = 0; i < itemCount; i++) {
-                    System.out.println((i + 1) + ". " + mem[i].getDescription());
-                }
+                Task task = TaskFactory.parseTask(command);
+                mem[itemCount] = task;
                 System.out.println(line);
-                continue;
+                itemCount++;
+                System.out.println("Got it! Added:\n  " + task.getDescription() + "\n" +
+                        "Now you have " + itemCount + " tasks in this list.");
+                System.out.println(line);
+            } catch (BoydException e) {
+                System.out.println(line);
+                System.out.println("Error: " + e.getMessage());
+                System.out.println("Please try again.");
+                System.out.println(line);
+            } catch (NumberFormatException e) {
+                // handles invalid number parsing
+                System.out.println(line);
+                System.out.println("Error: You must enter a valid number after 'mark'.");
+                System.out.println("Please try again.");
+                System.out.println(line);
             }
-            Task task = TaskFactory.parseTask(command);
-            mem[itemCount] = task;
-            System.out.println(line);
-            itemCount++;
-            System.out.println("Got it! Added:\n  " + task.getDescription() + "\n" +
-                    "Now you have " + itemCount + " tasks in this list.");
-            System.out.println(line);
+            bye();
         }
-        bye();
     }
 }
