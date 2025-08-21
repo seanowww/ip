@@ -84,7 +84,7 @@ public class Boyd {
             mem[itemCount] = task;
             System.out.println(line);
             itemCount++;
-            System.out.println("Got it! Added: \n  " + task.getDescription() + "\n" +
+            System.out.println("Got it! Added:\n  " + task.getDescription() + "\n" +
                     "Now you have " + itemCount + " tasks in this list.");
             System.out.println(line);
         }
