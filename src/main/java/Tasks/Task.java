@@ -21,7 +21,9 @@ public abstract class Task {
         this.isDone = false;
     }
 
-    public String getDescription() {
+    public String toString() {
         return "[" + getStatusIcon() + "] " + this.description;
     }
+
+    public abstract String toDataString();
 }

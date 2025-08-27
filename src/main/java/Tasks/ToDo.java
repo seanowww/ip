@@ -7,7 +7,14 @@ public class ToDo extends Task{
     }
 
     @Override
-    public String getDescription() {
-        return "[T]" + super.getDescription();
+    public String toString() {
+        return "[T]" + super.toString();
+    }
+
+    @Override
+    public String toDataString() {
+        return String.format("T | %d | %s",
+                (this.isDone ? 1 : 0),
+                super.description);
     }
 }
