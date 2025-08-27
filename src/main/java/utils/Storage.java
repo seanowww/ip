@@ -94,8 +94,10 @@ public class Storage {
                 if (parts.length < 4) {
                     throw new RuntimeException("Deadline missing due date: " + line);
                 }
-                String by = parts[3];
-                task = new Deadline(desc, by);
+                String[] dateTime = parts[3].split("\\s+", 2);
+                String date = dateTime[0];
+                String time = dateTime[1];
+                task = new Deadline(desc, date, time);
                 break;
             }
             case "E": { // Event
@@ -103,7 +105,7 @@ public class Storage {
                     throw new RuntimeException("Event missing start/end: " + line);
                 }
                 String from = parts[3];
-                String to   = parts[4];
+                String to = parts[4];
                 task = new Event(desc, from, to);
                 break;
             }

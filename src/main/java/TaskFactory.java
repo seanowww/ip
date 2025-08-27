@@ -2,6 +2,8 @@ import Tasks.*;
 import exceptions.BoydException;
 import utils.CommandType;
 
+import java.time.format.DateTimeParseException;
+
 public class TaskFactory {
     public static Task parseTask(String input) {
         String[] parts = input.trim().split("\\s+", 2); // split into two chunks
@@ -31,8 +33,22 @@ public class TaskFactory {
                 }
 
                 String desc = splitDeadline[0].trim();
-                String by = splitDeadline[1].trim();
-                return new Deadline(desc, by);
+                String by = splitDeadline[1];
+                //here, by could have date time or date
+                String[] dateTimeChunks = by.trim().split("\\s+", 2);
+                //Date and Time
+                try {
+                    if (dateTimeChunks.length == 2) {
+                        String date = dateTimeChunks[0];
+                        String time = dateTimeChunks[1];
+                        return new Deadline(desc, date, time);
+                    }
+                    //Date only
+                    by = by.trim();
+                    return new Deadline(desc, by);
+                } catch (DateTimeParseException e) {
+                    throw new BoydException("Datetime format must be: YYYY-MM-DD HH:mm OR YYYY-MM-DD");
+                }
 
             case EVENT:
                 if (parts.length < 2 || parts[1].trim().isEmpty()) {
