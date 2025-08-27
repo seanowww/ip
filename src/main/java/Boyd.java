@@ -1,15 +1,23 @@
 import Tasks.Task;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import exceptions.*;
+import java.io.FileWriter;   // Import the FileWriter class
+import java.io.IOException;  // Import the IOException class to handle errors
+import utils.Storage;
 
 public class Boyd {
     private static List<Task> mem = new ArrayList<>();
     private static String line = "____________________________________________________________";
     private static String chatbotName = "Boyd";
+    private static FileWriter myWriter;
+    private static final Storage storage = new Storage();
 
     public static void main(String[] args) {
+        mem = storage.load();
         greet();
         echo();
     }
@@ -51,8 +59,9 @@ public class Boyd {
                     mem.get(itemNo - 1).markAsDone();
                     System.out.println(line);
                     System.out.println("Nice! I've marked this task as done:\n" +
-                            "  " + mem.get(itemNo - 1).getDescription());
+                            "  " + mem.get(itemNo - 1).toString());
                     System.out.println(line);
+                    storage.save(mem);
                     continue;
                 }
 
@@ -69,13 +78,14 @@ public class Boyd {
                         throw new BoydException("No items yet!");
                     }
 
-                    String taskDescription = mem.get(itemNo - 1).getDescription();
+                    String taskDescription = mem.get(itemNo - 1).toString();
                     mem.remove(itemNo - 1);
                     System.out.println(line);
                     System.out.println("Noted! I've removed this task:\n" +
                             "  " + taskDescription + "\n" +
                             "Now you have " + mem.size() + " tasks in this list.");
                     System.out.println(line);
+                    storage.save(mem);
                     continue;
                 }
 
@@ -86,19 +96,20 @@ public class Boyd {
                         throw new BoydException("You haven't added any items!");
                     }
                     for (int i = 0; i < mem.size(); i++) {
-                        System.out.println((i + 1) + ". " + mem.get(i).getDescription());
+                        System.out.println((i + 1) + ". " + mem.get(i).toString());
                     }
                     System.out.println(line);
                     continue;
                 }
 
-                // add task
+                // add
                 Task task = TaskFactory.parseTask(command);
                 mem.add(task);
                 System.out.println(line);
-                System.out.println("Got it! Added:\n  " + task.getDescription() + "\n" +
+                System.out.println("Got it! Added:\n  " + task.toString() + "\n" +
                         "Now you have " + mem.size() + " tasks in this list.");
                 System.out.println(line);
+                storage.save(mem);
 
             } catch (BoydException e) {
                 System.out.println(line);
