@@ -8,7 +8,33 @@ import boyd.exceptions.BoydException;
 
 import java.time.format.DateTimeParseException;
 
+/**
+ * Parses user input strings into commands for the Boyd CLI and applies them to a {@link TaskList}.
+ * <p>
+ * Supported commands (case-insensitive):
+ * <pre>{@code
+ * bye
+ * list
+ * mark <number>
+ * delete <number>
+ * todo <description>
+ * deadline <description> /by <yyyy-MM-dd [HH:mm]>
+ * event <description> /from <yyyy-MM-dd HH:mm> /to <yyyy-MM-dd HH:mm>
+ * }</pre>
+ * Indices shown to users are 1-based.
+ * </p>
+ */
 public class Parser {
+
+    /**
+     * Handles a single line of user input by either mutating/printing from the given {@link TaskList}
+     * or signaling termination.
+     *
+     * @param input the raw user input line
+     * @param tasks the task list to operate on
+     * @return {@code true} if the caller should exit (i.e., user typed {@code bye}); {@code false} otherwise
+     * @throws BoydException for unknown commands or invalid arguments
+     */
     public static boolean handle(String input, TaskList tasks) {
         String trimmed = input.trim();
         if (trimmed.equalsIgnoreCase("bye")) {
@@ -37,6 +63,14 @@ public class Parser {
         return false;
     }
 
+    /**
+     * Parses a 1-based index from commands of the form {@code "<cmd> <number>"}.
+     *
+     * @param line the full command line
+     * @param cmd  the command keyword (e.g., {@code "mark"} or {@code "delete"}) used for error messages
+     * @return the parsed integer index (1-based)
+     * @throws BoydException if the number is missing or not a valid integer
+     */
     private static int parseIndex(String line, String cmd) {
         String[] parts = line.split("\\s+", 2);
         if (parts.length < 2 || parts[1].isBlank()) {
@@ -49,6 +83,23 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses an "add task" command into a concrete {@link Task}.
+     * <p>
+     * Accepted forms:
+     * <ul>
+     *   <li>{@code todo <description>}</li>
+     *   <li>{@code deadline <description> /by <yyyy-MM-dd HH:mm>}</li>
+     *   <li>{@code deadline <description> /by <yyyy-MM-dd>} (time defaults inside {@link Deadline})</li>
+     *   <li>{@code event <description> /from <yyyy-MM-dd HH:mm> /to <yyyy-MM-dd HH:mm>}</li>
+     * </ul>
+     * </p>
+     *
+     * @param input the full user command (not trimmed further than leading/trailing spaces)
+     * @return a newly constructed {@link ToDo}, {@link Deadline}, or {@link Event}
+     * @throws BoydException if the command keyword is unknown, required parts are missing,
+     *                       or date/time formats are invalid
+     */
     public static Task parseTask(String input) {
         String[] parts = input.trim().split("\\s+", 2);
         CommandType commandType;
