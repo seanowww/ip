@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Storage {
-    public List<Task> load() {
+    public List<Task> load(String filepath) {
         List<Task> taskList = new ArrayList<>();
-        File file = new File("./data/boyd.txt");  // or Paths.get("data","boyd.txt").toFile()
+        File file = new File(filepath);  // or Paths.get("data","boyd.txt").toFile()
         if (!file.exists()) {
             // No file yet → start empty
             return taskList;
@@ -101,11 +101,12 @@ public class Storage {
                 break;
             }
             case "E": { // Event
-                if (parts.length < 5) {
+                if (parts.length < 4) {
                     throw new RuntimeException("Event missing start/end: " + line);
                 }
-                String from = parts[3];
-                String to = parts[4];
+                String[] dateTime = parts[3].split("-", 2);
+                String from = dateTime[0].trim();
+                String to = dateTime[1].trim();
                 task = new Event(desc, from, to);
                 break;
             }

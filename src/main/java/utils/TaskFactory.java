@@ -1,6 +1,7 @@
+package utils;
+
 import Tasks.*;
 import exceptions.BoydException;
-import utils.CommandType;
 
 import java.time.format.DateTimeParseException;
 
