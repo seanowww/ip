@@ -13,7 +13,49 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Loads and saves {@link Task} data to a simple line-based text file.
+ *
+ * <h2>File location</h2>
+ * <ul>
+ *   <li>Save path: {@code ./data/boyd.txt}</li>
+ * </ul>
+ *
+ * <h2>File format (one task per line)</h2>
+ * Fields are separated by a pipe character {@code |} with optional surrounding spaces.
+ * <pre>
+ * T | &lt;done&gt; | &lt;description&gt;
+ * D | &lt;done&gt; | &lt;description&gt; | &lt;yyyy-MM-dd HH:mm&gt;
+ * E | &lt;done&gt; | &lt;description&gt; | &lt;from&gt; - &lt;to&gt;
+ * </pre>
+ * where {@code <done>} is {@code 0} (not done) or {@code 1} (done).
+ *
+ * <p>Examples:</p>
+ * <pre>
+ * T | 0 | read book
+ * D | 1 | return book | 2025-09-01 18:00
+ * E | 0 | project meeting | Aug 6th 2pm - 4pm
+ * </pre>
+ *
+ * <p><strong>Notes</strong>:
+ * <ul>
+ *   <li>Whitespace around the {@code |} separators is ignored when parsing.</li>
+ *   <li>Saving overwrites the whole file each time (no append).</li>
+ *   <li>If the file does not exist on load, an empty list is returned.</li>
+ * </ul>
+ * </p>
+ */
 public class Storage {
+
+    /**
+     * Reads tasks from the given file path.
+     *
+     * <p>If the file does not exist, an empty list is returned. Blank lines are ignored.
+     * Any malformed line results in a {@link RuntimeException}.</p>
+     *
+     * @param filepath path to the text file (e.g., {@code ./data/boyd.txt})
+     * @return list of tasks reconstructed from the file; never {@code null}
+     */
     public List<Task> load(String filepath) {
         List<Task> taskList = new ArrayList<>();
         File file = new File(filepath);  // or Paths.get("data","boyd.txt").toFile()
@@ -36,6 +78,13 @@ public class Storage {
         return taskList;
     }
 
+    /**
+     * Saves all tasks to {@code ./data/boyd.txt}, creating the {@code ./data} folder if needed.
+     * <p>Each task is written via {@link Task#toDataString()} followed by the platform
+     * line separator. The file is <em>overwritten</em> on each call.</p>
+     *
+     * @param tasks tasks to persist (order preserved)
+     */
     public void save(List<? extends Task> tasks) {
         try {
             // ensure ./data exists
@@ -56,17 +105,9 @@ public class Storage {
         }
     }
 
-    /*public void write(String toDataString) {
-        try {
-            FileWriter myWriter = new FileWriter("./data/boyd.txt");
-            myWriter.write(toDataString + "\n");
-            myWriter.close();
-            //System.out.println("Successfully wrote to the file.");
-        } catch (IOException e) {
-            System.out.println("An error occurred while writing to file.");
-            e.printStackTrace();
-        }
-    }*/
+    /**
+      * Parses one stored line into a {@link Task}.
+      */
 
     private Task dataStringToTask(String line) {
         if (line == null || line.isBlank()) {
@@ -120,6 +161,13 @@ public class Storage {
         return task;
     }
 
+    /**
+     * Parses the done flag from the file format.
+     *
+     * @param s {@code "0"} for not done, {@code "1"} for done (whitespace allowed)
+     * @return {@code true} if done, {@code false} if not done
+     * @throws RuntimeException if the flag is not {@code "0"} or {@code "1"}
+     */
     private boolean parseDone(String s) {
         s = s.trim();
         if (s.equals("1")) return true;
