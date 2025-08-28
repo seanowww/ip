@@ -9,49 +9,29 @@ import java.io.FileWriter;   // Import the FileWriter class
 import utils.Storage;
 import utils.TaskFactory;
 import utils.TaskList;
+import utils.Ui;
 
 public class Boyd {
     private static TaskList tasks;
-    private static String line = "____________________________________________________________";
-    private static String chatbotName = "Boyd";
     private static FileWriter myWriter;
+    private final Ui ui = new Ui();
     private static final Storage storage = new Storage();
 
     public static void main(String[] args) {
-        //new Boyd("./data/boyd.txt").run();
-        String filepath = "./data/boyd.txt";
+        new Boyd("./data/boyd.txt").run();
+    }
+
+    public Boyd(String filepath) {
         try {
             tasks = new TaskList(storage.load(filepath), storage);
-            greet();
-            echo();
         } catch (BoydException e) {
             //ui.showLoadingError();
             tasks = new TaskList(new ArrayList<>(), storage);
         }
     }
 
-    /*public Boyd(String filepath) {
-        //ui = new Ui();
-
-    }
-
     public void run() {
-
-    }*/
-
-    public static void greet() {
-        System.out.println(line);
-        System.out.println("Hello! I'm " + chatbotName + "!\nWhat can I do for you?");
-        System.out.println(line);
-    }
-
-    public static void bye() {
-        System.out.println(line);
-        System.out.println("Bye. Hope to see you again soon!");
-        System.out.println(line);
-    }
-
-    public static void echo() {
+        ui.greet();
         Scanner scanner = new Scanner(System.in);
         String command;
 
@@ -91,17 +71,13 @@ public class Boyd {
                 tasks.add(task);
 
             } catch (BoydException e) {
-                System.out.println(line);
-                System.out.println("Error: " + e.getMessage());
-                System.out.println("Please try again.");
-                System.out.println(line);
+                String message = "Error: " + e.getMessage();
+                ui.printErrorMessage(message);
             } catch (NumberFormatException e) {
-                System.out.println(line);
-                System.out.println("Error: You must enter a valid number after 'mark' or 'delete'.");
-                System.out.println("Please try again.");
-                System.out.println(line);
+                String message = "Error: You must enter a valid number after 'mark' or 'delete'.";
+                ui.printErrorMessage(message);
             }
         }
-        bye();
+        ui.bye();
     }
 }

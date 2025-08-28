@@ -9,7 +9,7 @@ import java.util.List;
 public class TaskList {
     private final List<Task> mem;
     private final Storage storage;
-    private static String line = "____________________________________________________________";
+    private final Ui ui = new Ui();
 
     public TaskList(List<? extends Task> taskList, Storage storage) {
         this.mem = new ArrayList<>(taskList);
@@ -24,10 +24,9 @@ public class TaskList {
 
     public void add(Task task) {
         mem.add(task);
-        System.out.println(line);
-        System.out.println("Got it! Added:\n  " + task.toString() + "\n" +
-                "Now you have " + mem.size() + " tasks in this list.");
-        System.out.println(line);
+        String message = "Got it! Added:\n  " + task.toString() + "\n" +
+                "Now you have " + mem.size() + " tasks in this list.";
+        ui.printWithLines(message);
         persist();
     }
 
@@ -41,23 +40,25 @@ public class TaskList {
         Task task = mem.get(itemNo - 1);
         String taskDescription = task.toString();
         mem.remove(itemNo - 1);
-        System.out.println(line);
-        System.out.println("Noted! I've removed this task:\n" +
+        String message = "Noted! I've removed this task:\n" +
                 "  " + taskDescription + "\n" +
-                "Now you have " + mem.size() + " tasks in this list.");
-        System.out.println(line);
+                "Now you have " + mem.size() + " tasks in this list.";
+        ui.printWithLines(message);
         persist();
     }
 
     public void list() {
-        System.out.println(line);
+        StringBuilder message = new StringBuilder();
         if (mem.isEmpty()) {
             throw new BoydException("You haven't added any items!");
         }
         for (int i = 0; i < mem.size(); i++) {
-            System.out.println((i + 1) + ". " + mem.get(i).toString());
+            message.append((i + 1)).append(". ").append(mem.get(i).toString());
+            if (i < mem.size() - 1) {
+                message.append("\n");
+            }
         }
-        System.out.println(line);
+        ui.printWithLines(message.toString());
     }
 
     public void mark(int itemNo) {
@@ -67,12 +68,10 @@ public class TaskList {
         if (mem.isEmpty()) {
             throw new BoydException("No items yet!");
         }
-
         mem.get(itemNo - 1).markAsDone();
-        System.out.println(line);
-        System.out.println("Nice! I've marked this task as done:\n" +
-                "  " + mem.get(itemNo - 1).toString());
-        System.out.println(line);
+        String message = "Nice! I've marked this task as done:\n" +
+                "  " + mem.get(itemNo - 1).toString();
+        ui.printWithLines(message);
         persist();
     }
 }
