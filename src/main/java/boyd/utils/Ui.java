@@ -2,7 +2,7 @@ package boyd.utils;
 
 public class Ui {
     private static final String LINE = "____________________________________________________________";
-    private final String CHATBOT_NAME = "boyd.Boyd";
+    private final String CHATBOT_NAME = "Boyd";
 
     public Ui() {
     }

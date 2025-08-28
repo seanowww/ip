@@ -39,7 +39,7 @@ public class Storage {
     public void save(List<? extends Task> tasks) {
         try {
             // ensure ./data exists
-            File saveFile = new File("./data/boyd.Boyd.txt");
+            File saveFile = new File("./data/boyd.txt");
             File dir = saveFile.getParentFile();
             if (dir != null) dir.mkdirs();
 
