@@ -1,10 +1,11 @@
 package boyd.utils;
 
+import boyd.tasks.Task;
+import boyd.exceptions.BoydException;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import boyd.exceptions.BoydException;
-import boyd.tasks.Task;
 
 /**
  * Mutable, in-memory list of {@link Task} items with simple persistence and UI output.
@@ -31,7 +32,7 @@ public class TaskList {
      * @param storage  persistence provider; may be {@code null} for in-memory only
      */
     public TaskList(List<? extends Task> taskList, Storage storage) {
-        this.tasks = new ArrayList<>(taskList); // defensive copy
+        this.tasks = new ArrayList<>(taskList);
         this.storage = storage;
     }
 
@@ -115,6 +116,41 @@ public class TaskList {
         persist();
     }
 
+    public void find(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            throw new BoydException("Find requires a non-empty keyword.");
+        }
+
+        String needle = keyword.toLowerCase();
+        TaskList matches = new TaskList(new ArrayList<>(), storage);
+
+        for (Task t : tasks) {
+            if (t.toString().toLowerCase().contains(needle)) {
+                matches.add(t);
+            }
+        }
+
+        if (matches.isEmpty()) {
+            ui.printWithLines("No matching tasks found.");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder("Here are the matching tasks in your list:")
+                .append(System.lineSeparator());
+        for (int i = 0; i < matches.size(); i++) {
+            sb.append(i + 1).append(". ").append(matches.get(i).toString());
+            if (i < matches.size() - 1) sb.append(System.lineSeparator());
+        }
+        ui.printWithLines(sb.toString());
+    }
+
+    public Task get(int i) {
+        if (tasks.isEmpty() || i > tasks.size()) {
+            throw new BoydException("Can't get task at that index!");
+        }
+        return tasks.get(i);
+    }
+
     /**
      * Returns the number of tasks currently stored.
      *
@@ -122,5 +158,9 @@ public class TaskList {
      */
     public int size() {
         return tasks.size();
+    }
+
+    public boolean isEmpty() {
+        return this.size() == 0;
     }
 }

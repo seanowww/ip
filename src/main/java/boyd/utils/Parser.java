@@ -67,6 +67,15 @@ public class Parser {
             return false;
         }
 
+        if (trimmed.startsWith("find")) {
+            String[] parts = trimmed.split("\\s+", 2);
+            if (parts.length < 2 || parts[1].isBlank()) {
+                throw new BoydException("Command should be: \"find <keyword>\"");
+            }
+            tasks.find(parts[1].trim());
+            return false;
+        }
+
         // otherwise treat as an "add task" command
         Task t = parseTask(trimmed);
         tasks.add(t);
