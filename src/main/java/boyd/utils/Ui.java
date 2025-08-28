@@ -2,10 +2,7 @@ package boyd.utils;
 
 public class Ui {
     private static final String LINE = "____________________________________________________________";
-    private final String CHATBOT_NAME = "Boyd";
-
-    public Ui() {
-    }
+    private static final String CHATBOT_NAME = "Boyd";
 
     public void printLine() {
         System.out.println(LINE);
@@ -13,7 +10,8 @@ public class Ui {
 
     public void greet() {
         printLine();
-        System.out.println("Hello! I'm " + CHATBOT_NAME + "!\nWhat can I do for you?");
+        System.out.println("Hello! I'm " + CHATBOT_NAME + "!");
+        System.out.println("What can I do for you?");
         printLine();
     }
 

@@ -1,9 +1,21 @@
 package boyd.tasks;
 
-public class Event extends Task{
-    String from;
-    String to;
+/**
+ * Represents an event task with a start and end time.
+ * The times are stored as strings (e.g., "yyyy-MM-dd HH:mm").
+ */
+public class Event extends Task {
 
+    private final String from;
+    private final String to;
+
+    /**
+     * Creates an {@code Event}.
+     *
+     * @param description the event description
+     * @param from        start datetime string
+     * @param to          end datetime string
+     */
     public Event(String description, String from, String to) {
         super(description);
         this.from = from;
@@ -17,10 +29,12 @@ public class Event extends Task{
 
     @Override
     public String toDataString() {
-        return String.format("E | %d | %s | %s - %s",
+        return String.format(
+                "E | %d | %s | %s - %s",
                 (this.isDone ? 1 : 0),
-                super.description,
+                getDescription(),
                 from,
-                to);
+                to
+        );
     }
 }
