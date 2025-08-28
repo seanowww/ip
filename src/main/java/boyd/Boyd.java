@@ -1,19 +1,17 @@
-import Tasks.Task;
+package boyd;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
-import exceptions.*;
-import java.io.FileWriter;   // Import the FileWriter class
 
-import utils.Parser;
-import utils.Storage;
-import utils.TaskList;
-import utils.Ui;
+import boyd.exceptions.BoydException;
+
+import boyd.utils.Parser;
+import boyd.utils.Storage;
+import boyd.utils.TaskList;
+import boyd.utils.Ui;
 
 public class Boyd {
     private static TaskList tasks;
-    private static FileWriter myWriter;
     private final Ui ui = new Ui();
     private static final Storage storage = new Storage();
 

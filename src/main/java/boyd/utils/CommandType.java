@@ -1,4 +1,4 @@
-package utils;
+package boyd.utils;
 
 public enum CommandType {
     TODO,

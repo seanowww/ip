@@ -1,4 +1,4 @@
-package Tasks;
+package boyd.tasks;
 
 public class ToDo extends Task{
 

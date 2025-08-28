@@ -1,9 +1,9 @@
-package utils;
+package boyd.utils;
 
-import Tasks.Deadline;
-import Tasks.Event;
-import Tasks.Task;
-import Tasks.ToDo;
+import boyd.tasks.Deadline;
+import boyd.tasks.Event;
+import boyd.tasks.Task;
+import boyd.tasks.ToDo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,7 +39,7 @@ public class Storage {
     public void save(List<? extends Task> tasks) {
         try {
             // ensure ./data exists
-            File saveFile = new File("./data/Boyd.txt");
+            File saveFile = new File("./data/boyd.Boyd.txt");
             File dir = saveFile.getParentFile();
             if (dir != null) dir.mkdirs();
 

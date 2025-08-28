@@ -1,7 +1,7 @@
-package utils;
+package boyd.utils;
 
-import Tasks.Task;
-import exceptions.BoydException;
+import boyd.tasks.Task;
+import boyd.exceptions.BoydException;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,10 @@
-package utils;
+package boyd.utils;
 
-import Tasks.*;
-import exceptions.BoydException;
+import boyd.tasks.Deadline;
+import boyd.tasks.Event;
+import boyd.tasks.Task;
+import boyd.tasks.ToDo;
+import boyd.exceptions.BoydException;
 
 import java.time.format.DateTimeParseException;
 

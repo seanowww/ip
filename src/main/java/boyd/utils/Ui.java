@@ -1,8 +1,8 @@
-package utils;
+package boyd.utils;
 
 public class Ui {
     private static final String LINE = "____________________________________________________________";
-    private final String CHATBOT_NAME = "Boyd";
+    private final String CHATBOT_NAME = "boyd.Boyd";
 
     public Ui() {
     }
