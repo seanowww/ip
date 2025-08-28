@@ -1,7 +1,15 @@
 package boyd.tasks;
 
-public class ToDo extends Task{
+/**
+ * Represents a simple to-do task without any date/time.
+ */
+public class ToDo extends Task {
 
+    /**
+     * Creates a new {@code ToDo} with the given description.
+     *
+     * @param description the task description
+     */
     public ToDo(String description) {
         super(description);
     }
@@ -13,8 +21,10 @@ public class ToDo extends Task{
 
     @Override
     public String toDataString() {
-        return String.format("T | %d | %s",
+        return String.format(
+                "T | %d | %s",
                 (this.isDone ? 1 : 0),
-                super.description);
+                super.description
+        );
     }
 }

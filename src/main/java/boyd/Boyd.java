@@ -19,11 +19,12 @@ import boyd.utils.Ui;
  */
 public class Boyd {
 
+    private static final String DEFAULT_SAVE_PATH = "./data/boyd.txt";
+    private static final Storage STORAGE = new Storage();
+
     private static TaskList tasks;
 
     private final Ui ui = new Ui();
-
-    private static final Storage storage = new Storage();
 
     /**
      * Launches the application.
@@ -32,7 +33,7 @@ public class Boyd {
      *             {@code ./data/boyd.txt} by default.
      */
     public static void main(String[] args) {
-        new Boyd("./data/boyd.txt").run();
+        new Boyd(DEFAULT_SAVE_PATH).run();
     }
 
     /**
@@ -41,14 +42,13 @@ public class Boyd {
      * If loading fails (e.g., file missing or corrupted), the app
      * starts with an empty task list and continues to run.
      *
-     * @param filepath path to the save file (e.g., {@code ./data/boyd.txt})
+     * @param filePath path to the save file (e.g., {@code ./data/boyd.txt})
      */
-    public Boyd(String filepath) {
+    public Boyd(String filePath) {
         try {
-            tasks = new TaskList(storage.load(filepath), storage);
+            tasks = new TaskList(STORAGE.load(filePath), STORAGE);
         } catch (BoydException e) {
-            // ui.showLoadingError(); // optional: surface a user-facing warning
-            tasks = new TaskList(new ArrayList<>(), storage);
+            tasks = new TaskList(new ArrayList<>(), STORAGE);
         }
     }
 
@@ -65,16 +65,18 @@ public class Boyd {
      */
     public void run() {
         ui.greet();
-        Scanner scanner = new Scanner(System.in);
-        while (true) {
-            String line = scanner.nextLine();
-            try {
-                boolean shouldExit = Parser.handle(line, tasks);
-                if (shouldExit) {
-                    break;
+        // try-with-resources ensures Scanner is closed (standard: manage resources)
+        try (Scanner scanner = new Scanner(System.in)) {
+            while (true) {
+                String line = scanner.nextLine();
+                try {
+                    boolean shouldExit = Parser.handle(line, tasks);
+                    if (shouldExit) {
+                        break;
+                    }
+                } catch (BoydException e) {
+                    ui.printErrorMessage(e.getMessage());
                 }
-            } catch (BoydException e) {
-                ui.printErrorMessage(e.getMessage());
             }
         }
         ui.bye();

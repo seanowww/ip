@@ -10,7 +10,7 @@ package boyd.tasks;
  */
 public abstract class Task {
 
-    protected String description;
+    protected final String description;
 
     protected boolean isDone;
 
@@ -34,7 +34,7 @@ public abstract class Task {
      * @return {@code "X"} if done; otherwise a single space
      */
     public String getStatusIcon() {
-        return (isDone ? "X" : " "); // mark done task with X
+        return isDone ? "X" : " ";
     }
 
     /**
@@ -50,6 +50,11 @@ public abstract class Task {
      */
     public void unmarkAsDone() {
         this.isDone = false;
+    }
+
+    /** @return the task description */
+    public String getDescription() {
+        return this.description;
     }
 
     /**

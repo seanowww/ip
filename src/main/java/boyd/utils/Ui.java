@@ -18,12 +18,7 @@ package boyd.utils;
 public class Ui {
     /** Horizontal separator used to frame console output blocks. */
     private static final String LINE = "____________________________________________________________";
-
-    private final String CHATBOT_NAME = "Boyd";
-
-    /** Creates a new {@code Ui}. */
-    public Ui() {
-    }
+    private static final String CHATBOT_NAME = "Boyd";
 
     /**
      * Prints the horizontal separator line followed by a newline.
@@ -38,7 +33,8 @@ public class Ui {
      */
     public void greet() {
         printLine();
-        System.out.println("Hello! I'm " + CHATBOT_NAME + "!\nWhat can I do for you?");
+        System.out.println("Hello! I'm " + CHATBOT_NAME + "!");
+        System.out.println("What can I do for you?");
         printLine();
     }
 

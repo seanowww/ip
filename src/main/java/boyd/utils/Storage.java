@@ -1,10 +1,5 @@
 package boyd.utils;
 
-import boyd.tasks.Deadline;
-import boyd.tasks.Event;
-import boyd.tasks.Task;
-import boyd.tasks.ToDo;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -12,6 +7,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
+import boyd.tasks.Deadline;
+import boyd.tasks.Event;
+import boyd.tasks.Task;
+import boyd.tasks.ToDo;
 
 /**
  * Loads and saves {@link Task} data to a simple line-based text file.
@@ -46,26 +46,24 @@ import java.util.Scanner;
  * </p>
  */
 public class Storage {
-
     /**
      * Reads tasks from the given file path.
      *
      * <p>If the file does not exist, an empty list is returned. Blank lines are ignored.
      * Any malformed line results in a {@link RuntimeException}.</p>
      *
-     * @param filepath path to the text file (e.g., {@code ./data/boyd.txt})
+     * @param filePath path to the text file (e.g., {@code ./data/boyd.txt})
      * @return list of tasks reconstructed from the file; never {@code null}
      */
-    public List<Task> load(String filepath) {
+    public List<Task> load(String filePath) {
         List<Task> taskList = new ArrayList<>();
-        File file = new File(filepath);  // or Paths.get("data","boyd.txt").toFile()
+        File file = new File(filePath);
         if (!file.exists()) {
-            // No file yet → start empty
-            return taskList;
+            return taskList; // start empty
         }
-        try (Scanner sc = new Scanner(file)) {
-            while (sc.hasNextLine()) {
-                String line = sc.nextLine();
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
                 if (line.isBlank()) {
                     continue;
                 }
@@ -87,20 +85,18 @@ public class Storage {
      */
     public void save(List<? extends Task> tasks) {
         try {
-            // ensure ./data exists
             File saveFile = new File("./data/boyd.txt");
             File dir = saveFile.getParentFile();
-            if (dir != null) dir.mkdirs();
-
-            // overwrite, not append (second arg = false is default, but keep it explicit)
-            try (FileWriter w = new FileWriter(saveFile, /*append*/ false)) {
+            if (dir != null) {
+                dir.mkdirs();
+            }
+            try (FileWriter writer = new FileWriter(saveFile, false)) {
                 for (Task t : tasks) {
-                    w.write(t.toDataString());
-                    w.write(System.lineSeparator());
+                    writer.write(t.toDataString());
+                    writer.write(System.lineSeparator());
                 }
             }
         } catch (IOException e) {
-            // surface a friendly message or rethrow your own DukeException
             System.out.println("Failed to save tasks: " + e.getMessage());
         }
     }
@@ -114,45 +110,50 @@ public class Storage {
             throw new RuntimeException("Empty line in save file");
         }
 
-        // Split like: "T | 1 | desc | extra | extra"
-        String[] parts = line.split("\\s*\\|\\s*"); // trims spaces around '|'
-
+        // Example: "T | 1 | desc | extra | extra"
+        String[] parts = line.split("\\s*\\|\\s*");
         if (parts.length < 3) {
             throw new RuntimeException("Bad line (need at least 3 fields): " + line);
         }
 
         String type = parts[0];
-        boolean done = parseDone(parts[1]);  // 0/1 -> boolean
+        boolean done = parseDone(parts[1]);   // "0"/"1"
         String desc = parts[2];
 
         Task task;
         switch (type) {
-            case "T": { // ToDo
-                task = new ToDo(desc);
-                break;
+        case "T": // ToDo
+            task = new ToDo(desc);
+            break;
+
+        case "D": { // Deadline: "yyyy-MM-dd HH:mm" OR "yyyy-MM-dd"
+            if (parts.length < 4) {
+                throw new RuntimeException("Deadline missing due date: " + line);
             }
-            case "D": { // Deadline
-                if (parts.length < 4) {
-                    throw new RuntimeException("Deadline missing due date: " + line);
-                }
-                String[] dateTime = parts[3].split("\\s+", 2);
-                String date = dateTime[0];
-                String time = dateTime[1];
-                task = new Deadline(desc, date, time);
-                break;
+            String[] dateTime = parts[3].trim().split("\\s+", 2);
+            String date = dateTime[0];
+            String time = (dateTime.length == 2) ? dateTime[1] : "00:00";
+            task = new Deadline(desc, date, time);
+            break;
+        }
+
+        case "E": {
+            if (parts.length < 4) {
+                throw new RuntimeException("Event missing start/end: " + line);
             }
-            case "E": { // Event
-                if (parts.length < 4) {
-                    throw new RuntimeException("Event missing start/end: " + line);
-                }
-                String[] dateTime = parts[3].split("-", 2);
-                String from = dateTime[0].trim();
-                String to = dateTime[1].trim();
-                task = new Event(desc, from, to);
-                break;
+            // Split on " - " (with spaces) so we don't break on date hyphens.
+            String[] range = parts[3].trim().split("\\s+-\\s+", 2);
+            if (range.length < 2) {
+                throw new RuntimeException("Event start/end should be 'from - to': " + line);
             }
-            default:
-                throw new RuntimeException("Unknown task type '" + type + "' in line: " + line);
+            String from = range[0].trim();
+            String to = range[1].trim();
+            task = new Event(desc, from, to);
+            break;
+        }
+
+        default:
+            throw new RuntimeException("Unknown task type '" + type + "' in line: " + line);
         }
 
         if (done) {
@@ -169,10 +170,13 @@ public class Storage {
      * @throws RuntimeException if the flag is not {@code "0"} or {@code "1"}
      */
     private boolean parseDone(String s) {
-        s = s.trim();
-        if (s.equals("1")) return true;
-        if (s.equals("0")) return false;
+        String v = s.trim();
+        if (v.equals("1")) {
+            return true;
+        }
+        if (v.equals("0")) {
+            return false;
+        }
         throw new RuntimeException("Done flag must be 0 or 1, got: " + s);
     }
-
 }
