@@ -8,7 +8,7 @@ import static java.time.LocalDateTime.parse;
 
 public class Deadline extends Task {
 
-    private static final DateTimeFormatter defaulDateTimeFormat =
+    private static final DateTimeFormatter DEFAULT_DATETIME_FORMAT =
             DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm"); // e.g., 2019-12-02 18:00
     private String due;
     private LocalDate date;
@@ -18,15 +18,15 @@ public class Deadline extends Task {
     public Deadline(String description, String date) {
         super(description);
         this.date = LocalDate.parse(date);
-        this.dateTime = this.date.atTime(0, 0);                 // default time
-        this.due = this.dateTime.format(defaulDateTimeFormat);
+        this.dateTime = this.date.atTime(0, 0);                 // default time 00:00
+        this.due = this.dateTime.format(DEFAULT_DATETIME_FORMAT);
     }
 
     // Convenience: user inputs date + time, e.g., "2019-12-02", "18:00"
     public Deadline(String description, String date, String time) {
         super(description);
-        this.dateTime = LocalDateTime.parse(date + " " + time, defaulDateTimeFormat); // use formatter
-        this.due = this.dateTime.format(defaulDateTimeFormat);
+        this.dateTime = LocalDateTime.parse(date + " " + time, DEFAULT_DATETIME_FORMAT); // use formatter
+        this.due = this.dateTime.format(DEFAULT_DATETIME_FORMAT);
     }
 
     @Override

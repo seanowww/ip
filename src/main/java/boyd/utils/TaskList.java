@@ -74,4 +74,8 @@ public class TaskList {
         ui.printWithLines(message);
         persist();
     }
+
+    public int size() {
+        return mem.size();
+    }
 }
