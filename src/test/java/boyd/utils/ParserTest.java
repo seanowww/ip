@@ -1,29 +1,35 @@
 package boyd.utils;
 
-import boyd.tasks.*;
-import boyd.exceptions.BoydException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import boyd.exceptions.BoydException;
+import boyd.tasks.Deadline;
+import boyd.tasks.Task;
+
 
 class ParserTest {
+
     @Test
-    void parse_deadline_dateTime_ok() {
+    void parseDeadlineDateTimeOk() {
         Task t = Parser.parseTask("deadline return book /by 2019-12-02 18:00");
         assertTrue(t instanceof Deadline);
         assertEquals("D | 0 | return book | 2019-12-02 18:00", t.toDataString());
     }
 
     @Test
-    void parse_deadline_missingBy_throws() {
-        var ex = assertThrows(BoydException.class,
-                () -> Parser.parseTask("deadline return book"));
+    void parseDeadlineMissingByThrows() {
+        BoydException ex = assertThrows(BoydException.class, ()
+                -> Parser.parseTask("deadline return book"));
         assertTrue(ex.getMessage().contains("/by"));
     }
 
     @Test
-    void parse_event_missingTo_throws() {
-        assertThrows(BoydException.class,
-                () -> Parser.parseTask("event meeting /from 2025-10-20 10:20"));
+    void parseEventMissingToThrows() {
+        assertThrows(BoydException.class, ()
+                -> Parser.parseTask("event meeting /from 2025-10-20 10:20"));
     }
 }

@@ -117,7 +117,7 @@ public class Storage {
         }
 
         String type = parts[0];
-        boolean done = parseDone(parts[1]);   // "0"/"1"
+        boolean done = parseDone(parts[1]);
         String desc = parts[2];
 
         Task task;
