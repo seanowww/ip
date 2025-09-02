@@ -27,16 +27,6 @@ public class Boyd {
     private final Ui ui = new Ui();
 
     /**
-     * Launches the application.
-     *
-     * @param args command-line arguments (ignored). The app loads from
-     *             {@code ./data/boyd.txt} by default.
-     */
-    public static void main(String[] args) {
-        new Boyd(DEFAULT_SAVE_PATH).run();
-    }
-
-    /**
      * Constructs the Boyd app and initializes the task list from disk.
      * <p>
      * If loading fails (e.g., file missing or corrupted), the app
@@ -51,6 +41,17 @@ public class Boyd {
             tasks = new TaskList(new ArrayList<>(), STORAGE);
         }
     }
+
+    /**
+     * Launches the application.
+     *
+     * @param args command-line arguments (ignored). The app loads from
+     *             {@code ./data/boyd.txt} by default.
+     */
+    public static void main(String[] args) {
+        new Boyd(DEFAULT_SAVE_PATH).run();
+    }
+
 
     /**
      * Runs the main REPL loop:

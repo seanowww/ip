@@ -1,10 +1,10 @@
 package boyd.utils;
 
-import boyd.tasks.Task;
-import boyd.exceptions.BoydException;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import boyd.exceptions.BoydException;
+import boyd.tasks.Task;
 
 
 /**
@@ -15,7 +15,7 @@ import java.util.List;
  * Indices passed to mutating methods are <strong>1-based</strong> (as shown to users).
  * </p>
  *
- * @implNote All methods that change the list call {@link #persist()} which is a no-op if
+ * All methods that change the list call {@link #persist()} which is a no-op if
  * {@link Storage} is {@code null}. User-visible messages are printed inside this class.
  */
 public class TaskList {
@@ -116,6 +116,13 @@ public class TaskList {
         persist();
     }
 
+    /**
+     * Finds tasks whose string representation contains the given keyword (case-insensitive),
+     * prints the results framed by lines, and preserves numbering starting from 1.
+     *
+     * @param keyword non-empty keyword to search for
+     * @throws BoydException if {@code keyword} is {@code null} or blank
+     */
     public void find(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             throw new BoydException("Find requires a non-empty keyword.");
@@ -139,11 +146,20 @@ public class TaskList {
                 .append(System.lineSeparator());
         for (int i = 0; i < matches.size(); i++) {
             sb.append(i + 1).append(". ").append(matches.get(i).toString());
-            if (i < matches.size() - 1) sb.append(System.lineSeparator());
+            if (i < matches.size() - 1) {
+                sb.append(System.lineSeparator());
+            }
         }
         ui.printWithLines(sb.toString());
     }
 
+    /**
+     * Returns the task at the given zero-based index without printing or persisting.
+     *
+     * @param i zero-based index into this list
+     * @return the {@link Task} at index {@code i}
+     * @throws BoydException if the list is empty or {@code i} is outside {@code [0, size())}
+     */
     public Task get(int i) {
         if (tasks.isEmpty() || i > tasks.size()) {
             throw new BoydException("Can't get task at that index!");
@@ -160,6 +176,11 @@ public class TaskList {
         return tasks.size();
     }
 
+    /**
+     * Returns whether the list contains no tasks.
+     *
+     * @return {@code true} if there are no tasks; {@code false} otherwise
+     */
     public boolean isEmpty() {
         return this.size() == 0;
     }

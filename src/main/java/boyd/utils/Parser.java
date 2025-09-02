@@ -7,9 +7,7 @@ import boyd.tasks.Deadline;
 import boyd.tasks.Event;
 import boyd.tasks.Task;
 import boyd.tasks.ToDo;
-import boyd.exceptions.BoydException;
 
-import java.time.format.DateTimeParseException;
 
 /**
  * Parses user input strings into commands for the Boyd CLI and applies them to a {@link TaskList}.
@@ -174,7 +172,7 @@ public class Parser {
                 throw new BoydException("Event must have both a '/from' and a '/to' time.");
             }
             String from = toSplit[0].trim(); // "yyyy-MM-dd HH:mm"
-            String to = toSplit[1].trim();   // "yyyy-MM-dd HH:mm"
+            String to = toSplit[1].trim(); // "yyyy-MM-dd HH:mm"
             return new Event(eventDesc, from, to); // let Event validate/parse
         }
         default -> throw new BoydException("Unknown command: " + parts[0]);
