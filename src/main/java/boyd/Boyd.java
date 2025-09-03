@@ -58,14 +58,10 @@ public class Boyd extends Application{
         userInput = new TextField();
         sendButton = new Button("Send");
 
-        DialogBox dialogBox = new DialogBox("Hello!", userImage);
-        dialogContainer.getChildren().addAll(dialogBox);
-
         AnchorPane mainLayout = new AnchorPane();
         mainLayout.getChildren().addAll(scrollPane, userInput, sendButton);
 
         scene = new Scene(mainLayout);
-
 
         stage.setTitle("Boyd");
         stage.setResizable(false);
@@ -97,8 +93,23 @@ public class Boyd extends Application{
 
         stage.setScene(scene);
         stage.show();
+
+        sendButton.setOnMouseClicked((event) -> {
+            handleUserInput();
+        });
+        userInput.setOnAction((event) -> {
+            handleUserInput();
+        });
     }
 
+    /**
+     * Creates a dialog box containing user input, and appends it to
+     * the dialog container. Clears the user input after processing.
+     */
+    private void handleUserInput() {
+        dialogContainer.getChildren().addAll(new DialogBox(userInput.getText(), userImage));
+        userInput.clear();
+    }
     /**
      * Constructs the Boyd app and initializes the task list from disk.
      * <p>
