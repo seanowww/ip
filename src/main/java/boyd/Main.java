@@ -111,10 +111,10 @@ public class Main extends Application{
      */
     private void handleUserInput() {
         String userText = userInput.getText();
-        String boydText = boyd.getResponse(userInput.getText());
+        String dukeText = boyd.getResponse(userInput.getText());
         dialogContainer.getChildren().addAll(
-                new DialogBox(userText, userImage),
-                new DialogBox(boydText, boydImage)
+                DialogBox.getUserDialog(userText, userImage),
+                DialogBox.getDukeDialog(dukeText, boydImage)
         );
         userInput.clear();
     }
