@@ -100,6 +100,8 @@ public class Boyd extends Application{
         userInput.setOnAction((event) -> {
             handleUserInput();
         });
+
+        dialogContainer.heightProperty().addListener((observable) -> scrollPane.setVvalue(1.0));
     }
 
     /**
