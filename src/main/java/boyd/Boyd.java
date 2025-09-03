@@ -8,6 +8,10 @@ import boyd.utils.Parser;
 import boyd.utils.Storage;
 import boyd.utils.TaskList;
 import boyd.utils.Ui;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.stage.Stage;
 
 /**
  * Entry point of the Boyd application.
@@ -17,7 +21,7 @@ import boyd.utils.Ui;
  * and {@link Ui} (console I/O). It is responsible for bootstrapping the app,
  * running the read–eval–print loop, and shutting down cleanly.
  */
-public class Boyd {
+public class Boyd extends Application{
 
     private static final String DEFAULT_SAVE_PATH = "./data/boyd.txt";
     private static final Storage STORAGE = new Storage();
@@ -25,6 +29,19 @@ public class Boyd {
     private static TaskList tasks;
 
     private final Ui ui = new Ui();
+
+    public Boyd() {
+        this(DEFAULT_SAVE_PATH);
+    }
+
+    @Override
+    public void start(Stage stage) {
+        Label helloWorld = new Label("Hello World!"); // Creating a new Label control
+        Scene scene = new Scene(helloWorld); // Setting the scene to be our Label
+
+        stage.setScene(scene); // Setting the stage to show our scene
+        stage.show(); // Render the stage.
+    }
 
     /**
      * Constructs the Boyd app and initializes the task list from disk.
