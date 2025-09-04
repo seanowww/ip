@@ -6,30 +6,23 @@ import java.util.List;
 import boyd.exceptions.BoydException;
 import boyd.tasks.Task;
 
-
 /**
- * Mutable, in-memory list of {@link Task} items with simple persistence and UI output.
+ * Mutable, in-memory list of {@link Task} items with optional persistence.
  * <p>
- * This class manages tasks, prints user-facing messages via {@link Ui}, and
- * persists changes via {@link Storage} when available.
- * Indices passed to mutating methods are <strong>1-based</strong> (as shown to users).
+ * This class is UI-agnostic: it does not print or format messages. Mutating
+ * operations (add, remove, mark) persist via {@link Storage} when available.
+ * Indices for user-facing operations are <strong>1-based</strong>.
  * </p>
- *
- * All methods that change the list call {@link #persist()} which is a no-op if
- * {@link Storage} is {@code null}. User-visible messages are printed inside this class.
  */
 public class TaskList {
     private final List<Task> tasks;
-    private final Storage storage;
-
-    private final Ui ui = new Ui();
+    private final Storage storage; // may be null for in-memory only
 
     /**
-     * Creates a {@code TaskList} initialized from an existing list.
-     * The provided list is copied defensively.
+     * Creates a {@code TaskList} initialized from an existing list (defensive copy).
      *
-     * @param taskList initial tasks (copied)
-     * @param storage  persistence provider; may be {@code null} for in-memory only
+     * @param taskList initial tasks
+     * @param storage persistence provider; may be {@code null} for in-memory only
      */
     public TaskList(List<? extends Task> taskList, Storage storage) {
         this.tasks = new ArrayList<>(taskList);
@@ -47,124 +40,96 @@ public class TaskList {
     }
 
     /**
-     * Adds a task to the end of the list, prints a confirmation, and persists.
+     * Adds a task to the end of the list and persists.
      *
      * @param task task to add
+     * @return the added task
      */
-    public void add(Task task) {
+    public Task add(Task task) {
         tasks.add(task);
-        String message = String.format(
-                "Got it! Added:%n  %s%nNow you have %d tasks in this list.",
-                task, tasks.size());
-        ui.printWithLines(message);
         persist();
+        return task;
     }
 
     /**
-     * Removes the task at the given 1-based position, prints a confirmation, and persists.
+     * Removes the task at the given 1-based position and persists.
      *
      * @param itemNo 1-based index of the task to remove
-     * @throws BoydException if the index is out of range or the list is empty
+     * @return the removed task
+     * @throws BoydException if the index is out of range
      */
-    public void remove(int itemNo) {
-        if (itemNo <= 0 || itemNo > tasks.size()) {
-            throw new BoydException("Invalid item number!");
-        }
+    public Task remove(int itemNo) {
+        validate1Based(itemNo);
         Task removed = tasks.remove(itemNo - 1);
-        String message = String.format(
-                "Noted! I've removed this task:%n  %s%nNow you have %d tasks in this list.",
-                removed, tasks.size());
-        ui.printWithLines(message);
         persist();
+        return removed;
     }
 
     /**
-     * Prints the tasks in display order, numbered starting at 1 and framed by lines.
+     * Returns all tasks in display order.
+     * <p>
+     * Callers should not modify the returned list structure. If you need a
+     * strictly unmodifiable view, wrap this in {@code List.copyOf(getTasks())}.
+     * </p>
      *
-     * @throws BoydException if the list is empty
+     * @return the underlying list of tasks
      */
-    public void list() {
-        if (tasks.isEmpty()) {
-            throw new BoydException("You haven't added any items!");
-        }
-        StringBuilder message = new StringBuilder();
-        for (int i = 0; i < tasks.size(); i++) {
-            message.append(i + 1).append(". ").append(tasks.get(i));
-            if (i < tasks.size() - 1) {
-                message.append(System.lineSeparator());
-            }
-        }
-        ui.printWithLines(message.toString());
+    public List<Task> getTasks() {
+        return tasks;
     }
 
     /**
-     * Marks the task at the given 1-based position as done, prints a confirmation, and persists.
+     * Marks the task at the given 1-based position as done and persists.
      *
      * @param itemNo 1-based index of the task to mark done
-     * @throws BoydException if the index is out of range or the list is empty
+     * @return the task that was marked
+     * @throws BoydException if the index is out of range
      */
-    public void mark(int itemNo) {
-        if (itemNo <= 0 || itemNo > tasks.size()) {
-            throw new BoydException("Invalid item number!");
-        }
+    public Task mark(int itemNo) {
+        validate1Based(itemNo);
         Task task = tasks.get(itemNo - 1);
         task.markAsDone();
-        String message = String.format(
-                "Nice! I've marked this task as done:%n  %s",
-                task);
-        ui.printWithLines(message);
         persist();
+        return task;
     }
 
     /**
-     * Finds tasks whose string representation contains the given keyword (case-insensitive),
-     * prints the results framed by lines, and preserves numbering starting from 1.
+     * Finds tasks whose string representation contains the given keyword (case-insensitive).
+     * <p>
+     * This method does not modify or persist state. Returns an empty list if there
+     * are no matches; callers may format user-facing messages as needed.
+     * </p>
      *
      * @param keyword non-empty keyword to search for
+     * @return a list of matching tasks (possibly empty)
      * @throws BoydException if {@code keyword} is {@code null} or blank
      */
-    public void find(String keyword) {
+    public List<Task> find(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             throw new BoydException("Find requires a non-empty keyword.");
         }
-
         String needle = keyword.toLowerCase();
-        TaskList matches = new TaskList(new ArrayList<>(), storage);
-
+        List<Task> matches = new ArrayList<>();
         for (Task t : tasks) {
             if (t.toString().toLowerCase().contains(needle)) {
                 matches.add(t);
             }
         }
-
-        if (matches.isEmpty()) {
-            ui.printWithLines("No matching tasks found.");
-            return;
-        }
-
-        StringBuilder sb = new StringBuilder("Here are the matching tasks in your list:")
-                .append(System.lineSeparator());
-        for (int i = 0; i < matches.size(); i++) {
-            sb.append(i + 1).append(". ").append(matches.get(i).toString());
-            if (i < matches.size() - 1) {
-                sb.append(System.lineSeparator());
-            }
-        }
-        ui.printWithLines(sb.toString());
+        return matches;
     }
 
     /**
-     * Returns the task at the given zero-based index without printing or persisting.
+     * Returns the task at the given zero-based index (no persist).
      *
-     * @param i zero-based index into this list
-     * @return the {@link Task} at index {@code i}
-     * @throws BoydException if the list is empty or {@code i} is outside {@code [0, size())}
+     * @param index zero-based index into this list
+     * @return the {@link Task} at the given index
+     * @throws BoydException if {@code index} is outside {@code [0, size())}
      */
-    public Task get(int i) {
-        if (tasks.isEmpty() || i > tasks.size()) {
+    public Task get(int index) {
+        if (index < 0 || index >= tasks.size()) {
             throw new BoydException("Can't get task at that index!");
         }
-        return tasks.get(i);
+        return tasks.get(index);
     }
 
     /**
@@ -182,6 +147,13 @@ public class TaskList {
      * @return {@code true} if there are no tasks; {@code false} otherwise
      */
     public boolean isEmpty() {
-        return this.size() == 0;
+        return tasks.isEmpty();
+    }
+
+    /** Validates a 1-based index against the current list size. */
+    private void validate1Based(int n) {
+        if (n <= 0 || n > tasks.size()) {
+            throw new BoydException("Invalid item number!");
+        }
     }
 }
