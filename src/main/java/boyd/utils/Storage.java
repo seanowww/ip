@@ -68,6 +68,8 @@ public class Storage {
                     continue;
                 }
                 Task task = dataStringToTask(line);
+                // Internal invariant → parser must never return null
+                assert task != null : "dataStringToTask returned null for: " + line;
                 taskList.add(task);
             }
         } catch (FileNotFoundException e) {
@@ -96,6 +98,7 @@ public class Storage {
                     writer.write(System.lineSeparator());
                 }
             }
+            assert saveFile.exists() : "Save file should exist after save()";
         } catch (IOException e) {
             System.out.println("Failed to save tasks: " + e.getMessage());
         }
@@ -133,6 +136,8 @@ public class Storage {
             String[] dateTime = parts[3].trim().split("\\s+", 2);
             String date = dateTime[0];
             String time = (dateTime.length == 2) ? dateTime[1] : "00:00";
+            assert date != null && !date.isBlank() : "Deadline date token must be non-blank";
+            assert time != null && !time.isBlank() : "Deadline time token must be non-blank";
             task = new Deadline(desc, date, time);
             break;
         }
@@ -148,6 +153,8 @@ public class Storage {
             }
             String from = range[0].trim();
             String to = range[1].trim();
+            assert !from.isBlank() && !to.isBlank()
+                    : "Event 'from' and 'to' tokens must be non-blank";
             task = new Event(desc, from, to);
             break;
         }
@@ -170,6 +177,8 @@ public class Storage {
      * @throws RuntimeException if the flag is not {@code "0"} or {@code "1"}
      */
     private boolean parseDone(String s) {
+        assert s != null : "parseDone must be given a non-null token";
+
         String v = s.trim();
         if (v.equals("1")) {
             return true;

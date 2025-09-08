@@ -15,7 +15,7 @@ import javafx.stage.Stage;
  */
 public class Main extends Application {
 
-    private Boyd boyd = new Boyd();
+    private final Boyd boyd = new Boyd();
 
     @Override
     public void start(Stage stage) {

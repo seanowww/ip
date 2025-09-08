@@ -82,6 +82,7 @@ public class Boyd {
      * @return a {@link BoydResponse} containing the message and status flags
      */
     public BoydResponse getResponse(String input) {
+        assert tasks != null;
         return Parser.handle(input, tasks);
     }
 }
