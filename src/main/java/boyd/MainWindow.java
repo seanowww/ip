@@ -50,7 +50,9 @@ public class MainWindow extends AnchorPane {
     @FXML
     private void handleUserInput() {
         String input = userInput.getText();
-        if (input == null || input.isBlank()) return;
+        if (input == null || input.isBlank()) {
+            return;
+        }
 
         BoydResponse res = boyd.getResponse(input);
 
@@ -62,6 +64,8 @@ public class MainWindow extends AnchorPane {
         );
 
         userInput.clear();
-        if (res.isExit()) javafx.application.Platform.exit();
+        if (res.isExit()) {
+            javafx.application.Platform.exit();
+        }
     }
 }
