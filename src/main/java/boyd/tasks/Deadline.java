@@ -42,8 +42,8 @@ public class Deadline extends Task {
     @Override
     public String toDataString() {
         return String.format(
-                "D | %d | %s | %s",
-                (this.isDone ? 1 : 0),
+                "D | %d | %s | %s", (
+                        this.isDone ? 1 : 0),
                 getDescription(),
                 due
         );

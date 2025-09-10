@@ -1,94 +1,139 @@
 package boyd.utils;
 
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 import boyd.exceptions.BoydException;
 import boyd.tasks.Deadline;
 import boyd.tasks.Event;
 import boyd.tasks.Task;
 import boyd.tasks.ToDo;
-import boyd.exceptions.BoydException;
-
-import java.time.format.DateTimeParseException;
 
 /**
- * Parses user input strings into commands for the Boyd CLI and applies them to a {@link TaskList}.
+ * Parses user input into commands and applies them to a {@link TaskList}.
  * <p>
- * Supported commands (case-insensitive):
+ * This class is UI-agnostic: it returns {@link BoydResponse} values that
+ * encode the message and status (OK/ERROR/EXIT) instead of printing.
+ * </p>
+ *
+ * <h2>Supported commands (case-insensitive)</h2>
  * <pre>{@code
  * bye
  * list
  * mark <number>
  * delete <number>
+ * find <keyword>
  * todo <description>
  * deadline <description> /by <yyyy-MM-dd [HH:mm]>
  * event <description> /from <yyyy-MM-dd HH:mm> /to <yyyy-MM-dd HH:mm>
  * }</pre>
  * Indices shown to users are 1-based.
- * </p>
  */
 public class Parser {
 
     private Parser() {
-        /* utility class */
+        // utility class
     }
 
     /**
-     * Handles a single line of user input by either mutating/printing from the given {@link TaskList}
-     * or signaling termination.
+     * Handles a single line of user input by mutating the given {@link TaskList} as needed
+     * and returning a {@link BoydResponse} describing the outcome.
      *
-     * @param input the raw user input line
-     * @param tasks the task list to operate on
-     * @return {@code true} if the caller should exit (i.e., user typed {@code bye}); {@code false} otherwise
-     * @throws BoydException for unknown commands or invalid arguments
+     * @param input raw user input
+     * @param tasks task list to operate on
+     * @return a {@link BoydResponse} with the formatted message and status flags
      */
-    public static boolean handle(String input, TaskList tasks) {
+    public static BoydResponse handle(String input, TaskList tasks) {
         String trimmed = input.trim();
         if (trimmed.isEmpty()) {
-            throw new BoydException("Command cannot be empty.");
+            return BoydResponse.error("Command cannot be empty.");
         }
         if (trimmed.equalsIgnoreCase("bye")) {
-            return true;
+            return BoydResponse.exit("Bye. Hope to see you again soon!");
         }
 
-        // simple commands
-        if (trimmed.equalsIgnoreCase("list")) {
-            tasks.list();
-            return false;
-        }
-        if (trimmed.startsWith("mark")) {
-            int idx = parseIndex(trimmed, "mark");
-            tasks.mark(idx);
-            return false;
-        }
-        if (trimmed.startsWith("delete")) {
-            int idx = parseIndex(trimmed, "delete");
-            tasks.remove(idx);
-            return false;
-        }
-
-        if (trimmed.startsWith("find")) {
-            String[] parts = trimmed.split("\\s+", 2);
-            if (parts.length < 2 || parts[1].isBlank()) {
-                throw new BoydException("Command should be: \"find <keyword>\"");
+        try {
+            // simple commands
+            if (trimmed.equalsIgnoreCase("list")) {
+                List<Task> taskList = tasks.getTasks();
+                if (taskList.isEmpty()) {
+                    return BoydResponse.error("You haven't added any items!");
+                }
+                String message = formatNumbered(taskList);
+                return BoydResponse.ok(message);
             }
-            tasks.find(parts[1].trim());
-            return false;
-        }
 
-        // otherwise treat as an "add task" command
-        Task t = parseTask(trimmed);
-        tasks.add(t);
-        return false;
+            if (trimmed.startsWith("mark")) {
+                int idx = parseIndex(trimmed, "mark");
+                Task task = tasks.mark(idx);
+                String message = String.format(
+                        "Nice! I've marked this task as done:%n  %s",
+                        task);
+                return BoydResponse.ok(message);
+            }
+
+            if (trimmed.startsWith("delete")) {
+                int idx = parseIndex(trimmed, "delete");
+                Task removedTask = tasks.remove(idx);
+                String message = String.format(
+                        "Noted! I've removed this task:%n  %s%nNow you have %d tasks in this list.",
+                        removedTask, tasks.size());
+                return BoydResponse.ok(message);
+            }
+
+            if (trimmed.startsWith("find")) {
+                String[] parts = trimmed.split("\\s+", 2);
+                if (parts.length < 2 || parts[1].isBlank()) {
+                    throw new BoydException("Command should be: \"find <keyword>\"");
+                }
+                List<Task> matches = tasks.find(parts[1].trim());
+                if (matches.isEmpty()) {
+                    return BoydResponse.ok("No matching tasks found.");
+                }
+                String message = formatNumbered(matches);
+                return BoydResponse.ok(message);
+            }
+
+            // otherwise treat as an "add task" command
+            Task t = parseTask(trimmed);
+            Task added = tasks.add(t);
+            String message = String.format(
+                    "Got it! Added:%n  %s%nNow you have %d tasks in this list.",
+                    added, tasks.size());
+            return BoydResponse.ok(message);
+
+        } catch (BoydException e) {
+            return BoydResponse.error(e.getMessage());
+        } catch (Exception e) {
+            // Guard against unexpected errors without exposing internals
+            return BoydResponse.error("Something went wrong. Please try again.");
+        }
+    }
+
+    /**
+     * Formats tasks as a numbered list (1-based), one per line.
+     *
+     * @param items tasks to format
+     * @return numbered list string
+     */
+    private static String formatNumbered(List<Task> items) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0) {
+                sb.append(System.lineSeparator());
+            }
+            sb.append(i + 1).append(". ").append(items.get(i));
+        }
+        return sb.toString();
     }
 
     /**
      * Parses a 1-based index from commands of the form {@code "<cmd> <number>"}.
      *
-     * @param line the full command line
-     * @param cmd  the command keyword (e.g., {@code "mark"} or {@code "delete"}) used for error messages
-     * @return the parsed integer index (1-based)
-     * @throws BoydException if the number is missing or not a valid integer
+     * @param line full command line
+     * @param cmd  command keyword used for error messages
+     * @return parsed integer index (1-based)
+     * @throws BoydException if the number is missing or invalid
      */
     private static int parseIndex(String line, String cmd) {
         String[] parts = line.split("\\s+", 2);
@@ -108,18 +153,17 @@ public class Parser {
 
     /**
      * Parses an "add task" command into a concrete {@link Task}.
-     * <p>
-     * Accepted forms:
+     *
+     * <p>Accepted forms:</p>
      * <ul>
      *   <li>{@code todo <description>}</li>
      *   <li>{@code deadline <description> /by <yyyy-MM-dd HH:mm>}</li>
      *   <li>{@code deadline <description> /by <yyyy-MM-dd>} (time defaults inside {@link Deadline})</li>
      *   <li>{@code event <description> /from <yyyy-MM-dd HH:mm> /to <yyyy-MM-dd HH:mm>}</li>
      * </ul>
-     * </p>
      *
-     * @param input the full user command (not trimmed further than leading/trailing spaces)
-     * @return a newly constructed {@link ToDo}, {@link Deadline}, or {@link Event}
+     * @param input full user command
+     * @return a new {@link ToDo}, {@link Deadline}, or {@link Event}
      * @throws BoydException if the command keyword is unknown, required parts are missing,
      *                       or date/time formats are invalid
      */
@@ -131,6 +175,8 @@ public class Parser {
         } catch (IllegalArgumentException e) {
             throw new BoydException("Unknown command: " + parts[0]);
         }
+
+        assert commandType != null;
 
         switch (commandType) {
         case TODO -> {
@@ -154,7 +200,7 @@ public class Parser {
                 if (dateTimeChunks.length == 2) {
                     return new Deadline(desc, dateTimeChunks[0], dateTimeChunks[1]); // yyyy-MM-dd HH:mm
                 } else {
-                    return new Deadline(desc, by); // yyyy-MM-dd (defaults to 00:00)
+                    return new Deadline(desc, by); // yyyy-MM-dd (defaults inside Deadline)
                 }
             } catch (DateTimeParseException e) {
                 throw new BoydException("Datetime format must be: yyyy-MM-dd HH:mm or yyyy-MM-dd.");

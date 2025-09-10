@@ -1,46 +1,56 @@
 package boyd;
 
 import java.util.ArrayList;
-import java.util.Scanner;
 
 import boyd.exceptions.BoydException;
+import boyd.utils.BoydResponse;
 import boyd.utils.Parser;
 import boyd.utils.Storage;
 import boyd.utils.TaskList;
-import boyd.utils.Ui;
 
 /**
- * Entry point of the Boyd application.
+ * Core facade for the Boyd application logic.
  * <p>
  * This class wires together the {@link Storage} (persistence),
- * {@link TaskList} (in-memory model), {@link Parser} (command parsing),
- * and {@link Ui} (console I/O). It is responsible for bootstrapping the app,
- * running the read–eval–print loop, and shutting down cleanly.
+ * {@link TaskList} (in-memory model), and {@link Parser} (command parsing).
+ * It is UI-agnostic and can be used by both a console runner and a JavaFX GUI.
+ * </p>
  */
 public class Boyd {
 
+    /** Default path for persisted data. */
     private static final String DEFAULT_SAVE_PATH = "./data/boyd.txt";
+
+    /** Shared storage provider for loading/saving tasks. */
     private static final Storage STORAGE = new Storage();
 
+    /** Chatbot display name used in greetings. */
+    private static final String CHATBOT_NAME = "Boyd";
+
+    /** In-memory task list backing the application. */
     private static TaskList tasks;
 
-    private final Ui ui = new Ui();
-
     /**
-     * Launches the application.
-     *
-     * @param args command-line arguments (ignored). The app loads from
-     *             {@code ./data/boyd.txt} by default.
+     * Constructs a {@code Boyd} instance using the default save path.
+     * <p>
+     * If loading fails (e.g., file missing or corrupted), the app starts with an
+     * empty task list and continues to run.
+     * </p>
      */
-    public static void main(String[] args) {
-        new Boyd(DEFAULT_SAVE_PATH).run();
+    public Boyd() {
+        try {
+            tasks = new TaskList(STORAGE.load(DEFAULT_SAVE_PATH), STORAGE);
+        } catch (BoydException e) {
+            tasks = new TaskList(new ArrayList<>(), STORAGE);
+        }
     }
 
     /**
-     * Constructs the Boyd app and initializes the task list from disk.
+     * Constructs a {@code Boyd} instance and initializes the task list from the given path.
      * <p>
-     * If loading fails (e.g., file missing or corrupted), the app
-     * starts with an empty task list and continues to run.
+     * If loading fails (e.g., file missing or corrupted), the app starts with an
+     * empty task list and continues to run.
+     * </p>
      *
      * @param filePath path to the save file (e.g., {@code ./data/boyd.txt})
      */
@@ -53,32 +63,26 @@ public class Boyd {
     }
 
     /**
-     * Runs the main REPL loop:
-     * <ol>
-     *   <li>Greets the user via {@link Ui}.</li>
-     *   <li>Reads a line from {@link java.util.Scanner}.</li>
-     *   <li>Delegates command handling to {@link Parser#handle(String, TaskList)}.</li>
-     *   <li>Exits when the parser indicates a {@code bye} command.</li>
-     * </ol>
-     * Any {@link BoydException} thrown by parsing/commands is caught and rendered
-     * as a friendly error message via {@link Ui}.
+     * Returns a standard greeting message for the chatbot.
+     *
+     * @return greeting text addressed to the user
      */
-    public void run() {
-        ui.greet();
-        // try-with-resources ensures Scanner is closed (standard: manage resources)
-        try (Scanner scanner = new Scanner(System.in)) {
-            while (true) {
-                String line = scanner.nextLine();
-                try {
-                    boolean shouldExit = Parser.handle(line, tasks);
-                    if (shouldExit) {
-                        break;
-                    }
-                } catch (BoydException e) {
-                    ui.printErrorMessage(e.getMessage());
-                }
-            }
-        }
-        ui.bye();
+    public String getGreeting() {
+        return "Hello! I'm " + CHATBOT_NAME + "!" + System.lineSeparator()
+                + "What can I do for you?";
+    }
+
+    /**
+     * Generates a response for the user's chat message by delegating to the parser.
+     * <p>
+     * Errors and exit conditions are encoded in the returned {@link BoydResponse}.
+     * </p>
+     *
+     * @param input raw user input
+     * @return a {@link BoydResponse} containing the message and status flags
+     */
+    public BoydResponse getResponse(String input) {
+        assert tasks != null;
+        return Parser.handle(input, tasks);
     }
 }
