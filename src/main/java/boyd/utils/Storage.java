@@ -60,9 +60,7 @@ public class Storage {
                     continue;
                 }
                 Task task = dataStringToTask(line);
-
                 assert task != null : "Parser must not return null";
-
                 taskList.add(task);
             }
         } catch (FileNotFoundException e) {
@@ -113,7 +111,6 @@ public class Storage {
                     writer.write(System.lineSeparator());
                 }
             }
-            // Best-effort postcondition: file should exist after a successful write
             assert saveFile.exists() : "Save file should exist after save()";
         } catch (IOException e) {
             // Caller can decide how to surface this (UI/log); keep message specific
@@ -161,7 +158,6 @@ public class Storage {
             String[] dateTime = parts[3].trim().split("\\s+", 2);
             String date = dateTime[0];
             String time = (dateTime.length == 2) ? dateTime[1] : "00:00";
-
             assert !date.isBlank() && !time.isBlank()
                     : "Deadline date/time tokens must be non-blank";
             task = new Deadline(desc, date, time);
@@ -189,6 +185,22 @@ public class Storage {
 
         if (done) {
             task.markAsDone();
+        }
+
+        int tagFieldIndex = switch (type) {
+            case "T" -> 3;
+            case "D", "E" -> 4;
+            default -> -1;
+        };
+
+        if (parts.length > tagFieldIndex) {
+            String tagsField = parts[tagFieldIndex].trim();
+            if (!tagsField.isEmpty()) {
+                String[] tagArray = tagsField.split("\\s*,\\s*");
+                for (String tag : tagArray) {
+                    task.addTag(tag);
+                }
+            }
         }
         return task;
     }

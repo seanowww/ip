@@ -1,6 +1,7 @@
 package boyd.utils;
 
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 import boyd.exceptions.BoydException;
@@ -115,12 +116,12 @@ public final class Parser {
         assert items != null : "items must be non-null";
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < items.size(); i++) {
-            Task t = items.get(i);
-            assert t != null : "items must not contain null elements";
+            Task task = items.get(i);
+            assert task != null : "items must not contain null elements";
             if (i > 0) {
                 sb.append(System.lineSeparator());
             }
-            sb.append(i + 1).append(". ").append(t);
+            sb.append(i + 1).append(". ").append(task);
         }
         return sb.toString();
     }
@@ -152,6 +153,27 @@ public final class Parser {
         }
     }
 
+    public static ParsedInput parseDescriptionAndTags(String descriptionWithTags) {
+        String[] parts = descriptionWithTags.trim().split("\\s+");
+
+        StringBuilder descBuilder = new StringBuilder();
+        List<String> tags = new ArrayList<>();
+
+        for (String part : parts) {
+            if (part.startsWith("#") && part.length() > 1) {
+                tags.add(part.substring(1).toLowerCase()); // drop "#" and standardise to lowercase
+            } else {
+                descBuilder.append(part).append(" ");
+            }
+        }
+
+        String description = descBuilder.toString().trim();
+        if (description.isEmpty()) {
+            throw new BoydException("You cannot add tags without a description!");
+        }
+        return new ParsedInput(description, tags);
+    }
+
     /**
      * Parses an "add task" command into a concrete {@link Task}.
      *
@@ -170,7 +192,7 @@ public final class Parser {
      */
     public static Task parseTask(String input) {
         if (input == null) {
-            throw new IllegalArgumentException("input must be non-null");
+            throw new IllegalArgumentException("Input must be non-null");
         }
 
         String[] parts = input.trim().split("\\s+", 2);
@@ -192,7 +214,13 @@ public final class Parser {
             if (parts.length < 2 || parts[1].trim().isEmpty()) {
                 throw new BoydException("The description of a todo cannot be empty!");
             }
-            return new ToDo(parts[1].trim());
+            String descriptionWithTags = parts[1].trim();
+            ParsedInput parsedInput = parseDescriptionAndTags(descriptionWithTags);
+            String desc = parsedInput.getDescription();
+            Task task = new ToDo(desc);
+            List<String> tags = parsedInput.getTags();
+            tags.forEach(task::addTag);
+            return task;
         }
         case DEADLINE -> {
             if (parts.length < 2 || parts[1].trim().isEmpty()) {
@@ -202,15 +230,21 @@ public final class Parser {
             if (splitDeadline.length < 2 || splitDeadline[0].isBlank() || splitDeadline[1].isBlank()) {
                 throw new BoydException("Deadline must have a description and a '/by' date.");
             }
-            String desc = splitDeadline[0].trim();
+            String descriptionWithTags = splitDeadline[0].trim();
+            ParsedInput parsedInput = parseDescriptionAndTags(descriptionWithTags);
+            String desc = parsedInput.getDescription();
+            List<String> tags = parsedInput.getTags();
             String by = splitDeadline[1].trim();
             String[] dateTimeChunks = by.split("\\s+", 2);
+            Task task;
             try {
                 if (dateTimeChunks.length == 2) {
-                    return new Deadline(desc, dateTimeChunks[0], dateTimeChunks[1]); // yyyy-MM-dd HH:mm
+                    task = new Deadline(desc, dateTimeChunks[0], dateTimeChunks[1]); // yyyy-MM-dd HH:mm
                 } else {
-                    return new Deadline(desc, by); // yyyy-MM-dd (defaults inside Deadline)
+                    task = new Deadline(desc, by); // yyyy-MM-dd (defaults inside Deadline)
                 }
+                tags.forEach(task::addTag);
+                return task;
             } catch (DateTimeParseException e) {
                 throw new BoydException("Datetime format must be: yyyy-MM-dd HH:mm or yyyy-MM-dd.");
             }
@@ -223,14 +257,20 @@ public final class Parser {
             if (fromSplit.length < 2 || fromSplit[0].isBlank()) {
                 throw new BoydException("Event must have a description and a '/from' time.");
             }
-            String eventDesc = fromSplit[0].trim();
+            String descriptionWithTags = fromSplit[0].trim();
+            ParsedInput parsedInput = parseDescriptionAndTags(descriptionWithTags);
+            String eventDesc = parsedInput.getDescription();
+            List<String> tags = parsedInput.getTags();
+            Task task;
             String[] toSplit = fromSplit[1].split("\\s+/to\\s+", 2);
             if (toSplit.length < 2 || toSplit[0].isBlank() || toSplit[1].isBlank()) {
                 throw new BoydException("Event must have both a '/from' and a '/to' time.");
             }
             String from = toSplit[0].trim(); // "yyyy-MM-dd HH:mm"
             String to = toSplit[1].trim(); // "yyyy-MM-dd HH:mm"
-            return new Event(eventDesc, from, to); // let Event validate/parse
+            task = new Event(eventDesc, from, to); // let Event validate/parse
+            tags.forEach(task::addTag);
+            return task;
         }
         default -> throw new BoydException("Unknown command: " + parts[0]);
         }

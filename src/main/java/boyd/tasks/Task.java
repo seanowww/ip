@@ -1,5 +1,10 @@
 package boyd.tasks;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * Base class for all tasks in the Boyd app.
  * <p>
@@ -12,6 +17,8 @@ public abstract class Task {
 
     protected final String description;
 
+    protected final Set<String> tags = new HashSet<>();
+
     protected boolean isDone;
 
     /**
@@ -22,6 +29,20 @@ public abstract class Task {
     public Task(String description) {
         this.description = description;
         this.isDone = false;
+    }
+
+
+    /**
+     * Adds a tag to the set of tags
+     *
+     * @param tag the tag to be added (not {@code null})
+     */
+    public void addTag(String tag) {
+        this.tags.add(tag);
+    }
+
+    public Set<String> getTags() {
+        return this.tags;
     }
 
     /**
@@ -58,13 +79,19 @@ public abstract class Task {
     }
 
     /**
-     * Returns the user-facing representation, e.g. {@code "[X] read book"}.
+     * Returns the user-facing representation, e.g. {@code "[X] read book <tags>"}.
      *
-     * @return display string combining status icon and description
+     * @return display string combining status icon, description and tags
      */
     @Override
     public String toString() {
-        return "[" + getStatusIcon() + "] " + this.description;
+        String str = "[" + getStatusIcon() + "] " + this.description;
+        if (!tags.isEmpty()) {
+            str += " " + tags.stream()
+                    .map(tag -> "#" + tag)
+                    .collect(Collectors.joining(" "));
+        }
+        return str;
     }
 
     /**
@@ -81,4 +108,11 @@ public abstract class Task {
      * @return persistence string for this task
      */
     public abstract String toDataString();
+
+    protected String formatTags() {
+        if (tags.isEmpty()) {
+            return "";
+        }
+        return String.join(",", tags);
+    }
 }
