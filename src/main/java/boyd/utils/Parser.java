@@ -185,6 +185,8 @@ public final class Parser {
             throw new BoydException("Unknown command: " + parts[0]);
         }
 
+        assert commandType != null;
+
         switch (commandType) {
         case TODO -> {
             if (parts.length < 2 || parts[1].trim().isEmpty()) {
