@@ -30,11 +30,12 @@ public class Event extends Task {
     @Override
     public String toDataString() {
         return String.format(
-                "E | %d | %s | %s - %s", (
+                "E | %d | %s | %s - %s | %s", (
                         this.isDone ? 1 : 0),
                 getDescription(),
                 from,
-                to
+                to,
+                super.formatTags()
         );
     }
 }
