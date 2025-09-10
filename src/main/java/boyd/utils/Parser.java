@@ -11,40 +11,34 @@ import boyd.tasks.ToDo;
 
 /**
  * Parses user input into commands and applies them to a {@link TaskList}.
- * <p>
- * This class is UI-agnostic: it returns {@link BoydResponse} values that
- * encode the message and status (OK/ERROR/EXIT) instead of printing.
- * </p>
  *
- * <h2>Supported commands (case-insensitive)</h2>
- * <pre>{@code
- * bye
- * list
- * mark <number>
- * delete <number>
- * find <keyword>
- * todo <description>
- * deadline <description> /by <yyyy-MM-dd [HH:mm]>
- * event <description> /from <yyyy-MM-dd HH:mm> /to <yyyy-MM-dd HH:mm>
- * }</pre>
- * Indices shown to users are 1-based.
+ * <p>This parser is UI-agnostic: it returns {@link BoydResponse} values that
+ * encode the message and status (OK/ERROR/EXIT) instead of printing.</p>
  */
-public class Parser {
+public final class Parser {
 
     private Parser() {
-        // utility class
+        // Utility class; do not instantiate.
     }
 
     /**
      * Handles a single line of user input by mutating the given {@link TaskList} as needed
      * and returning a {@link BoydResponse} describing the outcome.
      *
-     * @param input raw user input
-     * @param tasks task list to operate on
+     * @param input raw user input (non-null)
+     * @param tasks task list to operate on (non-null)
      * @return a {@link BoydResponse} with the formatted message and status flags
+     * @throws IllegalArgumentException if {@code input} or {@code tasks} is {@code null}
      */
     public static BoydResponse handle(String input, TaskList tasks) {
-        String trimmed = input.trim();
+        if (input == null) {
+            throw new IllegalArgumentException("input must be non-null");
+        }
+        if (tasks == null) {
+            throw new IllegalArgumentException("tasks must be non-null");
+        }
+
+        final String trimmed = input.trim();
         if (trimmed.isEmpty()) {
             return BoydResponse.error("Command cannot be empty.");
         }
@@ -56,6 +50,7 @@ public class Parser {
             // simple commands
             if (trimmed.equalsIgnoreCase("list")) {
                 List<Task> taskList = tasks.getTasks();
+                assert taskList != null : "TaskList.getTasks() must not return null";
                 if (taskList.isEmpty()) {
                     return BoydResponse.error("You haven't added any items!");
                 }
@@ -67,8 +62,7 @@ public class Parser {
                 int idx = parseIndex(trimmed, "mark");
                 Task task = tasks.mark(idx);
                 String message = String.format(
-                        "Nice! I've marked this task as done:%n  %s",
-                        task);
+                        "Nice! I've marked this task as done:%n  %s", task);
                 return BoydResponse.ok(message);
             }
 
@@ -103,9 +97,10 @@ public class Parser {
             return BoydResponse.ok(message);
 
         } catch (BoydException e) {
+            // Expected, user-recoverable errors
             return BoydResponse.error(e.getMessage());
-        } catch (Exception e) {
-            // Guard against unexpected errors without exposing internals
+        } catch (RuntimeException e) {
+            // Unexpected parser/runtime errors (do not leak details)
             return BoydResponse.error("Something went wrong. Please try again.");
         }
     }
@@ -113,16 +108,19 @@ public class Parser {
     /**
      * Formats tasks as a numbered list (1-based), one per line.
      *
-     * @param items tasks to format
+     * @param items tasks to format (non-null; must not contain null)
      * @return numbered list string
      */
     private static String formatNumbered(List<Task> items) {
+        assert items != null : "items must be non-null";
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < items.size(); i++) {
+            Task t = items.get(i);
+            assert t != null : "items must not contain null elements";
             if (i > 0) {
                 sb.append(System.lineSeparator());
             }
-            sb.append(i + 1).append(". ").append(items.get(i));
+            sb.append(i + 1).append(". ").append(t);
         }
         return sb.toString();
     }
@@ -136,6 +134,9 @@ public class Parser {
      * @throws BoydException if the number is missing or invalid
      */
     private static int parseIndex(String line, String cmd) {
+        assert line != null : "line must be non-null";
+        assert cmd != null && !cmd.isBlank() : "cmd must be non-blank";
+
         String[] parts = line.split("\\s+", 2);
         if (parts.length < 2 || parts[1].isBlank()) {
             throw new BoydException("Command should be: \"" + cmd + " <number>\"");
@@ -158,18 +159,26 @@ public class Parser {
      * <ul>
      *   <li>{@code todo <description>}</li>
      *   <li>{@code deadline <description> /by <yyyy-MM-dd HH:mm>}</li>
-     *   <li>{@code deadline <description> /by <yyyy-MM-dd>} (time defaults inside {@link Deadline})</li>
+     *   <li>{@code deadline <description> /by <yyyy-MM-dd>}</li>
      *   <li>{@code event <description> /from <yyyy-MM-dd HH:mm> /to <yyyy-MM-dd HH:mm>}</li>
      * </ul>
      *
-     * @param input full user command
+     * @param input full user command (non-null)
      * @return a new {@link ToDo}, {@link Deadline}, or {@link Event}
-     * @throws BoydException if the command keyword is unknown, required parts are missing,
-     *                       or date/time formats are invalid
+     * @throws IllegalArgumentException if {@code input} is {@code null}
+     * @throws BoydException if the command is unknown or malformed
      */
     public static Task parseTask(String input) {
+        if (input == null) {
+            throw new IllegalArgumentException("input must be non-null");
+        }
+
         String[] parts = input.trim().split("\\s+", 2);
-        CommandType commandType;
+        if (parts.length == 0 || parts[0].isBlank()) {
+            throw new BoydException("Unknown command: (empty)");
+        }
+
+        final CommandType commandType;
         try {
             commandType = CommandType.fromString(parts[0]);
         } catch (IllegalArgumentException e) {
@@ -220,7 +229,7 @@ public class Parser {
                 throw new BoydException("Event must have both a '/from' and a '/to' time.");
             }
             String from = toSplit[0].trim(); // "yyyy-MM-dd HH:mm"
-            String to = toSplit[1].trim();   // "yyyy-MM-dd HH:mm"
+            String to = toSplit[1].trim(); // "yyyy-MM-dd HH:mm"
             return new Event(eventDesc, from, to); // let Event validate/parse
         }
         default -> throw new BoydException("Unknown command: " + parts[0]);

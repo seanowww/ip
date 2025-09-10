@@ -16,53 +16,83 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 
 /**
- * Represents a dialog box consisting of an ImageView to represent the speaker's face
- * and a label containing text from the speaker.
+ * A dialog box consisting of an {@link ImageView} to represent the speaker's face
+ * and a {@link Label} containing the speaker's text.
  */
 public class DialogBox extends HBox {
+
     @FXML
     private Label dialog;
+
     @FXML
     private ImageView displayPicture;
 
-    private DialogBox(String text, Image img) {
+    private DialogBox(String text, Image image) {
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(MainWindow.class.getResource("/view/DialogBox.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(
+                    MainWindow.class.getResource("/view/DialogBox.fxml"));
             fxmlLoader.setController(this);
             fxmlLoader.setRoot(this);
             fxmlLoader.load();
         } catch (IOException e) {
+            // For a small app, printing stack trace is acceptable.
+            // In production, prefer a logger.
             e.printStackTrace();
         }
 
-        dialog.setText(text);
-        displayPicture.setImage(img);
+        assert text != null : "Dialog text must not be null";
+        assert image != null : "Dialog image must not be null";
+
+        this.dialog.setText(text);
+        this.displayPicture.setImage(image);
     }
 
     /**
-     * Flips the dialog box such that the ImageView is on the left and text on the right.
+     * Flips the dialog box such that the image is on the left and the text on the right.
      */
     private void flip() {
-        ObservableList<Node> tmp = FXCollections.observableArrayList(this.getChildren());
-        Collections.reverse(tmp);
-        getChildren().setAll(tmp);
+        ObservableList<Node> children = FXCollections.observableArrayList(getChildren());
+        Collections.reverse(children);
+        getChildren().setAll(children);
         setAlignment(Pos.TOP_LEFT);
     }
 
-    public static DialogBox getUserDialog(String text, Image img) {
-        return new DialogBox(text, img);
+    /**
+     * Returns a dialog box representing a user message.
+     *
+     * @param text message content
+     * @param image image representing the user
+     * @return a {@code DialogBox} for the user
+     */
+    public static DialogBox getUserDialog(String text, Image image) {
+        return new DialogBox(text, image);
     }
 
-    public static DialogBox getBoydDialog(String text, Image img) {
-        var db = new DialogBox(text, img);
-        db.flip();
-        return db;
+    /**
+     * Returns a dialog box representing a Boyd message.
+     *
+     * @param text message content
+     * @param image image representing Boyd
+     * @return a {@code DialogBox} for Boyd
+     */
+    public static DialogBox getBoydDialog(String text, Image image) {
+        DialogBox dialogBox = new DialogBox(text, image);
+        dialogBox.flip();
+        return dialogBox;
     }
 
-    public static DialogBox getErrorDialog(String text, Image img) {
-        text = "Error: " + text + "\n" + "Please try again.";
-        var db = new DialogBox(text, img);
-        db.flip();
-        return db;
+    /**
+     * Returns a dialog box representing an error message from Boyd.
+     *
+     * @param text error message content
+     * @param image image representing Boyd
+     * @return a {@code DialogBox} for an error response
+     */
+    public static DialogBox getErrorDialog(String text, Image image) {
+        String errorMessage = "Error: " + text + System.lineSeparator()
+                + "Please try again.";
+        DialogBox dialogBox = new DialogBox(errorMessage, image);
+        dialogBox.flip();
+        return dialogBox;
     }
 }

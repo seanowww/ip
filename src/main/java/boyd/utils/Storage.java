@@ -14,15 +14,11 @@ import boyd.tasks.Task;
 import boyd.tasks.ToDo;
 
 /**
- * Loads and saves {@link Task} data to a simple line-based text file.
+ * Persists and restores {@link Task} data from a simple line-based text file.
  *
- * <h2>File location</h2>
- * <ul>
- *   <li>Save path: {@code ./data/boyd.txt}</li>
- * </ul>
+ * <p><strong>File location:</strong> {@code ./data/boyd.txt}</p>
  *
- * <h2>File format (one task per line)</h2>
- * Fields are separated by a pipe character {@code |} with optional surrounding spaces.
+ * <p><strong>File format (one task per line):</strong></p>
  * <pre>
  * T | &lt;done&gt; | &lt;description&gt;
  * D | &lt;done&gt; | &lt;description&gt; | &lt;yyyy-MM-dd HH:mm&gt;
@@ -30,37 +26,33 @@ import boyd.tasks.ToDo;
  * </pre>
  * where {@code <done>} is {@code 0} (not done) or {@code 1} (done).
  *
- * <p>Examples:</p>
- * <pre>
- * T | 0 | read book
- * D | 1 | return book | 2025-09-01 18:00
- * E | 0 | project meeting | Aug 6th 2pm - 4pm
- * </pre>
- *
- * <p><strong>Notes</strong>:
- * <ul>
- *   <li>Whitespace around the {@code |} separators is ignored when parsing.</li>
- *   <li>Saving overwrites the whole file each time (no append).</li>
- *   <li>If the file does not exist on load, an empty list is returned.</li>
- * </ul>
- * </p>
+ * <p><strong>Notes:</strong> whitespace around {@code |} is ignored; the save
+ * operation overwrites the file.</p>
  */
 public class Storage {
+
     /**
      * Reads tasks from the given file path.
      *
-     * <p>If the file does not exist, an empty list is returned. Blank lines are ignored.
-     * Any malformed line results in a {@link RuntimeException}.</p>
+     * <p>If the file does not exist, an empty list is returned. Blank lines are
+     * ignored. Malformed lines throw a {@link RuntimeException}.</p>
      *
      * @param filePath path to the text file (e.g., {@code ./data/boyd.txt})
      * @return list of tasks reconstructed from the file; never {@code null}
+     * @throws IllegalArgumentException if {@code filePath} is {@code null} or blank
      */
     public List<Task> load(String filePath) {
+        if (filePath == null || filePath.isBlank()) {
+            throw new IllegalArgumentException("filePath must be non-null and non-blank");
+        }
+
         List<Task> taskList = new ArrayList<>();
         File file = new File(filePath);
+
         if (!file.exists()) {
-            return taskList; // start empty
+            return taskList;
         }
+
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
@@ -68,46 +60,77 @@ public class Storage {
                     continue;
                 }
                 Task task = dataStringToTask(line);
-                // Internal invariant → parser must never return null
-                assert task != null : "dataStringToTask returned null for: " + line;
+
+                assert task != null : "Parser must not return null";
+
                 taskList.add(task);
             }
         } catch (FileNotFoundException e) {
-            System.out.println("Error loading file: " + e.getMessage());
+            // Unlikely given exists() check, but environment could race
+            throw new RuntimeException("File disappeared during load: " + filePath, e);
+        }
+
+        // Post-conditions: list contains no nulls
+        for (Task t : taskList) {
+            assert t != null : "taskList must not contain null elements";
         }
         return taskList;
     }
 
     /**
-     * Saves all tasks to {@code ./data/boyd.txt}, creating the {@code ./data} folder if needed.
-     * <p>Each task is written via {@link Task#toDataString()} followed by the platform
-     * line separator. The file is <em>overwritten</em> on each call.</p>
+     * Saves all tasks to {@code ./data/boyd.txt}, creating the {@code ./data} folder
+     * if needed. Each task is written via {@link Task#toDataString()} followed by
+     * the platform line separator. The file is <em>overwritten</em> on each call.
      *
      * @param tasks tasks to persist (order preserved)
+     * @throws IllegalArgumentException if {@code tasks} is {@code null} or contains {@code null}
      */
     public void save(List<? extends Task> tasks) {
-        try {
-            File saveFile = new File("./data/boyd.txt");
-            File dir = saveFile.getParentFile();
-            if (dir != null) {
-                dir.mkdirs();
+        if (tasks == null) {
+            throw new IllegalArgumentException("tasks must not be null");
+        }
+        for (Task t : tasks) {
+            if (t == null) {
+                throw new IllegalArgumentException("tasks must not contain null elements");
             }
+        }
+
+        File saveFile = new File("./data/boyd.txt");
+        File dir = saveFile.getParentFile();
+
+        try {
+            if (dir != null && !dir.exists() && !dir.mkdirs()) {
+                throw new IOException("Could not create data directory: " + dir);
+            }
+
             try (FileWriter writer = new FileWriter(saveFile, false)) {
                 for (Task t : tasks) {
-                    writer.write(t.toDataString());
+                    String line = t.toDataString();
+                    // Internal invariant: serialization must be non-blank
+                    assert line != null && !line.isBlank()
+                            : "Task.toDataString() must return non-blank content";
+                    writer.write(line);
                     writer.write(System.lineSeparator());
                 }
             }
+            // Best-effort postcondition: file should exist after a successful write
             assert saveFile.exists() : "Save file should exist after save()";
         } catch (IOException e) {
-            System.out.println("Failed to save tasks: " + e.getMessage());
+            // Caller can decide how to surface this (UI/log); keep message specific
+            throw new RuntimeException("Failed to save tasks to " + saveFile.getPath(), e);
         }
     }
 
     /**
-      * Parses one stored line into a {@link Task}.
-      */
-
+     * Parses one stored line into a {@link Task}.
+     *
+     * <p>Throws {@link RuntimeException} for malformed external data. Uses assertions
+     * for parser invariants.</p>
+     *
+     * @param line one line from the save file
+     * @return a reconstructed {@link Task}
+     * @throws RuntimeException if the line is malformed
+     */
     private Task dataStringToTask(String line) {
         if (line == null || line.isBlank()) {
             throw new RuntimeException("Empty line in save file");
@@ -118,6 +141,9 @@ public class Storage {
         if (parts.length < 3) {
             throw new RuntimeException("Bad line (need at least 3 fields): " + line);
         }
+        // Parser invariant after length check: first three tokens present
+        assert parts[0] != null && parts[1] != null && parts[2] != null
+                : "First three fields must be present";
 
         String type = parts[0];
         boolean done = parseDone(parts[1]);
@@ -125,23 +151,22 @@ public class Storage {
 
         Task task;
         switch (type) {
-        case "T": // ToDo
+        case "T":
             task = new ToDo(desc);
             break;
-
-        case "D": { // Deadline: "yyyy-MM-dd HH:mm" OR "yyyy-MM-dd"
+        case "D": {
             if (parts.length < 4) {
                 throw new RuntimeException("Deadline missing due date: " + line);
             }
             String[] dateTime = parts[3].trim().split("\\s+", 2);
             String date = dateTime[0];
             String time = (dateTime.length == 2) ? dateTime[1] : "00:00";
-            assert date != null && !date.isBlank() : "Deadline date token must be non-blank";
-            assert time != null && !time.isBlank() : "Deadline time token must be non-blank";
+
+            assert !date.isBlank() && !time.isBlank()
+                    : "Deadline date/time tokens must be non-blank";
             task = new Deadline(desc, date, time);
             break;
         }
-
         case "E": {
             if (parts.length < 4) {
                 throw new RuntimeException("Event missing start/end: " + line);
@@ -158,7 +183,6 @@ public class Storage {
             task = new Event(desc, from, to);
             break;
         }
-
         default:
             throw new RuntimeException("Unknown task type '" + type + "' in line: " + line);
         }
@@ -177,8 +201,7 @@ public class Storage {
      * @throws RuntimeException if the flag is not {@code "0"} or {@code "1"}
      */
     private boolean parseDone(String s) {
-        assert s != null : "parseDone must be given a non-null token";
-
+        assert s != null : "parseDone must be called with a non-null token";
         String v = s.trim();
         if (v.equals("1")) {
             return true;
