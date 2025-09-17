@@ -17,9 +17,13 @@ public abstract class Task {
     /**
      * Creates a new task with the given description, initially not done.
      *
-     * @param description the task description (not {@code null})
+     * @param description the task description (non-null and non-blank)
+     * @throws IllegalArgumentException if {@code description} is {@code null} or blank
      */
     public Task(String description) {
+        if (description == null || description.isBlank()) {
+            throw new IllegalArgumentException("description must be non-null and non-blank");
+        }
         this.description = description;
         this.isDone = false;
     }
