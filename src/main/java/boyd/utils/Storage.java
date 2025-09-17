@@ -188,20 +188,12 @@ public class Storage {
         }
 
         int tagFieldIndex = switch (type) {
-            case "T" -> 3;
-            case "D", "E" -> 4;
-            default -> -1;
+        case "T" -> 3;
+        case "D", "E" -> 4;
+        default -> -1;
         };
 
-        if (parts.length > tagFieldIndex) {
-            String tagsField = parts[tagFieldIndex].trim();
-            if (!tagsField.isEmpty()) {
-                String[] tagArray = tagsField.split("\\s*,\\s*");
-                for (String tag : tagArray) {
-                    task.addTag(tag);
-                }
-            }
-        }
+        // Tag support removed; ignore any trailing fields for forward compatibility
         return task;
     }
 

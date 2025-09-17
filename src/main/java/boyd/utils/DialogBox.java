@@ -27,6 +27,12 @@ public class DialogBox extends HBox {
     @FXML
     private ImageView displayPicture;
 
+    /**
+     * Creates a dialog box with text and avatar image.
+     *
+     * @param text  message content (non-null)
+     * @param image avatar image (non-null)
+     */
     private DialogBox(String text, Image image) {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(
@@ -65,7 +71,9 @@ public class DialogBox extends HBox {
      * @return a {@code DialogBox} for the user
      */
     public static DialogBox getUserDialog(String text, Image image) {
-        return new DialogBox(text, image);
+        DialogBox dialogBox = new DialogBox(text, image);
+        // Style: user bubble (default assigned in FXML: bubble user)
+        return dialogBox;
     }
 
     /**
@@ -77,6 +85,9 @@ public class DialogBox extends HBox {
      */
     public static DialogBox getBoydDialog(String text, Image image) {
         DialogBox dialogBox = new DialogBox(text, image);
+        // Style: boyd bubble (programmatically swap class)
+        dialogBox.dialog.getStyleClass().remove("user");
+        dialogBox.dialog.getStyleClass().add("boyd");
         dialogBox.flip();
         return dialogBox;
     }
@@ -92,6 +103,9 @@ public class DialogBox extends HBox {
         String errorMessage = "Error: " + text + System.lineSeparator()
                 + "Please try again.";
         DialogBox dialogBox = new DialogBox(errorMessage, image);
+        // Style: error bubble (programmatically swap class)
+        dialogBox.dialog.getStyleClass().remove("user");
+        dialogBox.dialog.getStyleClass().add("error");
         dialogBox.flip();
         return dialogBox;
     }

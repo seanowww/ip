@@ -1,0 +1,57 @@
+/*
+ * AI-assisted UI polish: compact spacing, legible typography, and clear alignment.
+ * Tooling: Cursor with GPT-5 suggested CSS values; verified visually and kept minimal.
+ */
+
+/* Base */
+.root {
+    -fx-font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+}
+
+/* ScrollPane content should use available width */
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+/* Dialog bubbles */
+.bubble {
+    -fx-padding: 8 10 8 10;
+    -fx-background-radius: 8;
+    -fx-background-color: #e9eef5;
+    -fx-text-fill: #1a1d29;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0.2, 0, 1);
+}
+
+.boyd {
+    -fx-background-color: #dfe8ff;
+}
+
+.error {
+    -fx-background-color: #ffe2e2;
+    -fx-text-fill: #6b2222;
+}
+
+/* Avatar sizing and spacing */
+.avatar {
+    -fx-translate-y: 2;
+}
+
+/* Alignments come from HBox flip in code; we just style variants */
+.hbox {
+    -fx-spacing: 8;
+}
+
+/* Input area */
+.text-field {
+    -fx-background-radius: 8;
+    -fx-padding: 8 10 8 10;
+}
+.button {
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+}
+

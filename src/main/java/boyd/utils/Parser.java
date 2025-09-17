@@ -153,6 +153,12 @@ public final class Parser {
         }
     }
 
+    /**
+     * Parses a description-with-tags string into its description and tags.
+     *
+     * @param descriptionWithTags text that may contain words and #tags
+     * @return a {@link ParsedInput} containing description and tags
+     */
     public static ParsedInput parseDescriptionAndTags(String descriptionWithTags) {
         String[] parts = descriptionWithTags.trim().split("\\s+");
 
@@ -214,13 +220,8 @@ public final class Parser {
             if (parts.length < 2 || parts[1].trim().isEmpty()) {
                 throw new BoydException("The description of a todo cannot be empty!");
             }
-            String descriptionWithTags = parts[1].trim();
-            ParsedInput parsedInput = parseDescriptionAndTags(descriptionWithTags);
-            String desc = parsedInput.getDescription();
-            Task task = new ToDo(desc);
-            List<String> tags = parsedInput.getTags();
-            tags.forEach(task::addTag);
-            return task;
+            String desc = parts[1].trim();
+            return new ToDo(desc);
         }
         case DEADLINE -> {
             if (parts.length < 2 || parts[1].trim().isEmpty()) {
@@ -230,10 +231,7 @@ public final class Parser {
             if (splitDeadline.length < 2 || splitDeadline[0].isBlank() || splitDeadline[1].isBlank()) {
                 throw new BoydException("Deadline must have a description and a '/by' date.");
             }
-            String descriptionWithTags = splitDeadline[0].trim();
-            ParsedInput parsedInput = parseDescriptionAndTags(descriptionWithTags);
-            String desc = parsedInput.getDescription();
-            List<String> tags = parsedInput.getTags();
+            String desc = splitDeadline[0].trim();
             String by = splitDeadline[1].trim();
             String[] dateTimeChunks = by.split("\\s+", 2);
             Task task;
@@ -243,7 +241,6 @@ public final class Parser {
                 } else {
                     task = new Deadline(desc, by); // yyyy-MM-dd (defaults inside Deadline)
                 }
-                tags.forEach(task::addTag);
                 return task;
             } catch (DateTimeParseException e) {
                 throw new BoydException("Datetime format must be: yyyy-MM-dd HH:mm or yyyy-MM-dd.");
@@ -257,10 +254,7 @@ public final class Parser {
             if (fromSplit.length < 2 || fromSplit[0].isBlank()) {
                 throw new BoydException("Event must have a description and a '/from' time.");
             }
-            String descriptionWithTags = fromSplit[0].trim();
-            ParsedInput parsedInput = parseDescriptionAndTags(descriptionWithTags);
-            String eventDesc = parsedInput.getDescription();
-            List<String> tags = parsedInput.getTags();
+            String eventDesc = fromSplit[0].trim();
             Task task;
             String[] toSplit = fromSplit[1].split("\\s+/to\\s+", 2);
             if (toSplit.length < 2 || toSplit[0].isBlank() || toSplit[1].isBlank()) {
@@ -269,7 +263,6 @@ public final class Parser {
             String from = toSplit[0].trim(); // "yyyy-MM-dd HH:mm"
             String to = toSplit[1].trim(); // "yyyy-MM-dd HH:mm"
             task = new Event(eventDesc, from, to); // let Event validate/parse
-            tags.forEach(task::addTag);
             return task;
         }
         default -> throw new BoydException("Unknown command: " + parts[0]);

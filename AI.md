@@ -37,3 +37,21 @@ Files updated with AI assistance:
 
 If further AI-assisted changes are made, update this file with the date, files, and a short summary of the assistance.
 
+### UI Polish (AI-Assisted)
+- Files: `src/main/resources/view/MainWindow.fxml`, `src/main/resources/view/DialogBox.fxml`, `src/main/resources/view/styles.css`, `src/main/java/boyd/utils/DialogBox.java`
+- Changes:
+  - Optimized layout to reduce wasted space: moved input into an `HBox`, enabled `fitToWidth` on `ScrollPane`, tightened paddings, and added a compact spacing.
+  - Added a CSS stylesheet with compact typography and bubble styles; distinct variants for user, Boyd, and error messages.
+  - Reduced avatar size to save vertical space and improved alignment.
+  - Added programmatic style-class assignment in `DialogBox` for Boyd and error bubbles.
+- Rationale: Improve readability in a small window, support long replies without excessive background space.
+- Verification: App builds, tests pass, and Checkstyle passes.
+
+### Parser/Storage Formatting Corrections
+- Files: `src/main/java/boyd/tasks/*`, `src/main/java/boyd/utils/Parser.java`, `src/main/java/boyd/utils/Storage.java`
+- Changes:
+  - Reverted experimental tag persistence to match the original iP data format expected by tests.
+  - Fixed Checkstyle issues (indentation, missing Javadoc) introduced during edits.
+- Rationale: Maintain backward compatibility with existing tests and storage format.
+- Verification: `./gradlew test` and `./gradlew check` both pass after changes.
+

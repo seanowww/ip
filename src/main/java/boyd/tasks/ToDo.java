@@ -22,10 +22,9 @@ public class ToDo extends Task {
     @Override
     public String toDataString() {
         return String.format(
-                "T | %d | %s | %s", (
+                "T | %d | %s", (
                         this.isDone ? 1 : 0),
-                super.description,
-                super.formatTags()
+                super.description
         );
     }
 }
