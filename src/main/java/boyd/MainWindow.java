@@ -28,24 +28,34 @@ public class MainWindow extends AnchorPane {
     private Image userImage = new Image(this.getClass().getResourceAsStream("/images/DaUser.jpeg"));
     private Image boydImage = new Image(this.getClass().getResourceAsStream("/images/DaBoyd.jpg"));
 
+    /**
+     * Initializes controller bindings after FXML is loaded.
+     */
     @FXML
     public void initialize() {
         scrollPane.vvalueProperty().bind(dialogContainer.heightProperty());
     }
 
-    /** Injects the Boyd instance */
+    /**
+     * Injects the {@link Boyd} core and posts an initial greeting.
+     *
+     * @param d the application core instance
+     * @throws IllegalArgumentException if {@code d} is {@code null}
+     */
     public void setBoyd(Boyd d) {
+        if (d == null) {
+            throw new IllegalArgumentException("Boyd instance must not be null");
+        }
         boyd = d;
-        //Proactively message the user first
-        var greeting = boyd.getGreeting();
+        // Proactively message the user first
+        String greeting = boyd.getGreeting();
         dialogContainer.getChildren().add(
                 DialogBox.getBoydDialog(greeting, boydImage)
         );
     }
 
     /**
-     * Creates two dialog boxes, one echoing user input and the other containing Boyd's reply and then appends them to
-     * the dialog container. Clears the user input after processing.
+     * Handles the Send action: reads user input, gets a response, and updates the dialog.
      */
     @FXML
     private void handleUserInput() {
