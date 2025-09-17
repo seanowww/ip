@@ -226,62 +226,62 @@ public final class Parser {
 
         assert commandType != null;
 
-        switch (commandType) {
-        case TODO -> {
-            if (parts.length < 2 || parts[1].trim().isEmpty()) {
-                throw new BoydException("The description of a todo cannot be empty!");
-            }
-            String desc = parts[1].trim();
-            return new ToDo(desc);
+        return switch (commandType) {
+        case TODO -> parseTodo(parts);
+        case DEADLINE -> parseDeadline(parts);
+        case EVENT -> parseEvent(parts);
+        };
+    }
+
+    private static Task parseTodo(String[] parts) {
+        if (parts.length < 2 || parts[1].trim().isEmpty()) {
+            throw new BoydException("The description of a todo cannot be empty!");
         }
-        case DEADLINE -> {
-            if (parts.length < 2 || parts[1].trim().isEmpty()) {
-                throw new BoydException("The description of a deadline cannot be empty!");
-            }
-            String[] splitDeadline = parts[1].split("\\s+/by\\s+", 2);
-            if (splitDeadline.length < 2 || splitDeadline[0].isBlank() || splitDeadline[1].isBlank()) {
-                throw new BoydException("Deadline must have a description and a '/by' date.");
-            }
-            String desc = splitDeadline[0].trim();
-            String by = splitDeadline[1].trim();
-            String[] dateTimeChunks = by.split("\\s+", 2);
-            Task task;
-            try {
-                if (dateTimeChunks.length == 2) {
-                    task = new Deadline(desc, dateTimeChunks[0], dateTimeChunks[1]); // yyyy-MM-dd HH:mm
-                } else {
-                    task = new Deadline(desc, by); // yyyy-MM-dd (defaults inside Deadline)
-                }
-                return task;
-            } catch (DateTimeParseException e) {
-                throw new BoydException("Datetime format must be: yyyy-MM-dd HH:mm or yyyy-MM-dd.");
-            }
+        String desc = parts[1].trim();
+        return new ToDo(desc);
+    }
+
+    private static Task parseDeadline(String[] parts) {
+        if (parts.length < 2 || parts[1].trim().isEmpty()) {
+            throw new BoydException("The description of a deadline cannot be empty!");
         }
-        case EVENT -> {
-            if (parts.length < 2 || parts[1].trim().isEmpty()) {
-                throw new BoydException("The description of an event cannot be empty!");
-            }
-            String[] fromSplit = parts[1].split("\\s+/from\\s+", 2);
-            if (fromSplit.length < 2 || fromSplit[0].isBlank()) {
-                throw new BoydException("Event must have a description and a '/from' time.");
-            }
-            String eventDesc = fromSplit[0].trim();
-            Task task;
-            String[] toSplit = fromSplit[1].split("\\s+/to\\s+", 2);
-            if (toSplit.length < 2 || toSplit[0].isBlank() || toSplit[1].isBlank()) {
-                throw new BoydException("Event must have both a '/from' and a '/to' time.");
-            }
-            String from = toSplit[0].trim(); // "yyyy-MM-dd HH:mm"
-            String to = toSplit[1].trim(); // "yyyy-MM-dd HH:mm"
-            // Event constructor validates datetime format; surface as user-facing error.
-            try {
-                task = new Event(eventDesc, from, to);
-            } catch (DateTimeParseException e) {
-                throw new BoydException("Datetime format must be: yyyy-MM-dd HH:mm.");
-            }
-            return task;
+        String[] splitDeadline = parts[1].split("\\s+/by\\s+", 2);
+        if (splitDeadline.length < 2 || splitDeadline[0].isBlank() || splitDeadline[1].isBlank()) {
+            throw new BoydException("Deadline must have a description and a '/by' date.");
         }
-        default -> throw new BoydException("Unknown command: " + parts[0]);
+        String desc = splitDeadline[0].trim();
+        String by = splitDeadline[1].trim();
+        String[] dateTimeChunks = by.split("\\s+", 2);
+        try {
+            if (dateTimeChunks.length == 2) {
+                return new Deadline(desc, dateTimeChunks[0], dateTimeChunks[1]);
+            } else {
+                return new Deadline(desc, by);
+            }
+        } catch (DateTimeParseException e) {
+            throw new BoydException("Datetime format must be: yyyy-MM-dd HH:mm or yyyy-MM-dd.");
+        }
+    }
+
+    private static Task parseEvent(String[] parts) {
+        if (parts.length < 2 || parts[1].trim().isEmpty()) {
+            throw new BoydException("The description of an event cannot be empty!");
+        }
+        String[] fromSplit = parts[1].split("\\s+/from\\s+", 2);
+        if (fromSplit.length < 2 || fromSplit[0].isBlank()) {
+            throw new BoydException("Event must have a description and a '/from' time.");
+        }
+        String eventDesc = fromSplit[0].trim();
+        String[] toSplit = fromSplit[1].split("\\s+/to\\s+", 2);
+        if (toSplit.length < 2 || toSplit[0].isBlank() || toSplit[1].isBlank()) {
+            throw new BoydException("Event must have both a '/from' and a '/to' time.");
+        }
+        String from = toSplit[0].trim();
+        String to = toSplit[1].trim();
+        try {
+            return new Event(eventDesc, from, to);
+        } catch (DateTimeParseException e) {
+            throw new BoydException("Datetime format must be: yyyy-MM-dd HH:mm.");
         }
     }
 }
