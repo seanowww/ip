@@ -64,3 +64,12 @@ If further AI-assisted changes are made, update this file with the date, files, 
 - Rationale: Align event datetime handling with deadlines and reject invalid inputs like `/from 2 /to 3`.
 - Verification: Unit tests and Checkstyle pass.
 
+### Code Quality: Boolean Naming
+- Files: `src/main/java/boyd/utils/BoydResponse.java`, `src/main/java/boyd/tasks/Task.java`
+- Changes:
+  - Renamed boolean fields to boolean-sounding names per CS2103/T convention.
+    - `BoydResponse.exit` → `isExitFlag`, `BoydResponse.error` → `isErrorFlag` (public API remains `isExit()`, `isError()`).
+    - Confirmed `Task.isDone` already follows the convention. Updated local variable names accordingly (e.g., `isDoneFlag` in storage parsing) and aligned JavaDocs.
+- Rationale: Improve readability and adhere to boolean naming guidelines.
+- Verification: All tests and Checkstyle pass.
+

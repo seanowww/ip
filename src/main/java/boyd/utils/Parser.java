@@ -48,54 +48,12 @@ public final class Parser {
         }
 
         try {
-            // simple commands
-            if (trimmed.equalsIgnoreCase("list")) {
-                List<Task> taskList = tasks.getTasks();
-                assert taskList != null : "TaskList.getTasks() must not return null";
-                if (taskList.isEmpty()) {
-                    return BoydResponse.error("You haven't added any items!");
-                }
-                String message = formatNumbered(taskList);
-                return BoydResponse.ok(message);
+            BoydResponse quick = handleSimpleCommands(trimmed, tasks);
+            if (quick != null) {
+                return quick;
             }
 
-            if (trimmed.startsWith("mark")) {
-                int idx = parseIndex(trimmed, "mark");
-                Task task = tasks.mark(idx);
-                String message = String.format(
-                        "Nice! I've marked this task as done:%n  %s", task);
-                return BoydResponse.ok(message);
-            }
-
-            if (trimmed.startsWith("delete")) {
-                int idx = parseIndex(trimmed, "delete");
-                Task removedTask = tasks.remove(idx);
-                String message = String.format(
-                        "Noted! I've removed this task:%n  %s%nNow you have %d tasks in this list.",
-                        removedTask, tasks.size());
-                return BoydResponse.ok(message);
-            }
-
-            if (trimmed.startsWith("find")) {
-                String[] parts = trimmed.split("\\s+", 2);
-                if (parts.length < 2 || parts[1].isBlank()) {
-                    throw new BoydException("Command should be: \"find <keyword>\"");
-                }
-                List<Task> matches = tasks.find(parts[1].trim());
-                if (matches.isEmpty()) {
-                    return BoydResponse.ok("No matching tasks found.");
-                }
-                String message = formatNumbered(matches);
-                return BoydResponse.ok(message);
-            }
-
-            // otherwise treat as an "add task" command
-            Task t = parseTask(trimmed);
-            Task added = tasks.add(t);
-            String message = String.format(
-                    "Got it! Added:%n  %s%nNow you have %d tasks in this list.",
-                    added, tasks.size());
-            return BoydResponse.ok(message);
+            return handleAddCommand(trimmed, tasks);
 
         } catch (BoydException e) {
             // Expected, user-recoverable errors
@@ -104,6 +62,59 @@ public final class Parser {
             // Unexpected parser/runtime errors (do not leak details)
             return BoydResponse.error("Something went wrong. Please try again.");
         }
+    }
+
+    private static BoydResponse handleSimpleCommands(String trimmed, TaskList tasks) {
+        if (trimmed.equalsIgnoreCase("list")) {
+            List<Task> taskList = tasks.getTasks();
+            assert taskList != null : "TaskList.getTasks() must not return null";
+            if (taskList.isEmpty()) {
+                return BoydResponse.error("You haven't added any items!");
+            }
+            String message = formatNumbered(taskList);
+            return BoydResponse.ok(message);
+        }
+
+        if (trimmed.startsWith("mark")) {
+            int idx = parseIndex(trimmed, "mark");
+            Task task = tasks.mark(idx);
+            String message = String.format(
+                    "Nice! I've marked this task as done:%n  %s", task);
+            return BoydResponse.ok(message);
+        }
+
+        if (trimmed.startsWith("delete")) {
+            int idx = parseIndex(trimmed, "delete");
+            Task removedTask = tasks.remove(idx);
+            String message = String.format(
+                    "Noted! I've removed this task:%n  %s%nNow you have %d tasks in this list.",
+                    removedTask, tasks.size());
+            return BoydResponse.ok(message);
+        }
+
+        if (trimmed.startsWith("find")) {
+            String[] parts = trimmed.split("\\s+", 2);
+            if (parts.length < 2 || parts[1].isBlank()) {
+                throw new BoydException("Command should be: \"find <keyword>\"");
+            }
+            List<Task> matches = tasks.find(parts[1].trim());
+            if (matches.isEmpty()) {
+                return BoydResponse.ok("No matching tasks found.");
+            }
+            String message = formatNumbered(matches);
+            return BoydResponse.ok(message);
+        }
+
+        return null; // not a simple command
+    }
+
+    private static BoydResponse handleAddCommand(String trimmed, TaskList tasks) {
+        Task t = parseTask(trimmed);
+        Task added = tasks.add(t);
+        String message = String.format(
+                "Got it! Added:%n  %s%nNow you have %d tasks in this list.",
+                added, tasks.size());
+        return BoydResponse.ok(message);
     }
 
     /**

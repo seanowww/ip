@@ -12,16 +12,16 @@ public final class BoydResponse {
     private final String message;
 
     /** True if this response signals program termination. */
-    private final boolean exit;
+    private final boolean isExitFlag;
 
     /** True if this response represents an error. */
-    private final boolean error;
+    private final boolean isErrorFlag;
 
-    private BoydResponse(String message, boolean exit, boolean error) {
+    private BoydResponse(String message, boolean isExitFlag, boolean isErrorFlag) {
         assert message != null : "Message must not be null";
         this.message = message;
-        this.exit = exit;
-        this.error = error;
+        this.isExitFlag = isExitFlag;
+        this.isErrorFlag = isErrorFlag;
     }
 
     /**
@@ -69,7 +69,7 @@ public final class BoydResponse {
      * @return true if exit, false otherwise
      */
     public boolean isExit() {
-        return this.exit;
+        return this.isExitFlag;
     }
 
     /**
@@ -78,6 +78,6 @@ public final class BoydResponse {
      * @return true if error, false otherwise
      */
     public boolean isError() {
-        return this.error;
+        return this.isErrorFlag;
     }
 }

@@ -143,47 +143,12 @@ public class Storage {
                 : "First three fields must be present";
 
         String type = parts[0];
-        boolean done = parseDone(parts[1]);
+        boolean isDoneFlag = parseDone(parts[1]);
         String desc = parts[2];
 
-        Task task;
-        switch (type) {
-        case "T":
-            task = new ToDo(desc);
-            break;
-        case "D": {
-            if (parts.length < 4) {
-                throw new RuntimeException("Deadline missing due date: " + line);
-            }
-            String[] dateTime = parts[3].trim().split("\\s+", 2);
-            String date = dateTime[0];
-            String time = (dateTime.length == 2) ? dateTime[1] : "00:00";
-            assert !date.isBlank() && !time.isBlank()
-                    : "Deadline date/time tokens must be non-blank";
-            task = new Deadline(desc, date, time);
-            break;
-        }
-        case "E": {
-            if (parts.length < 4) {
-                throw new RuntimeException("Event missing start/end: " + line);
-            }
-            // Split on " - " (with spaces) so we don't break on date hyphens.
-            String[] range = parts[3].trim().split("\\s+-\\s+", 2);
-            if (range.length < 2) {
-                throw new RuntimeException("Event start/end should be 'from - to': " + line);
-            }
-            String from = range[0].trim();
-            String to = range[1].trim();
-            assert !from.isBlank() && !to.isBlank()
-                    : "Event 'from' and 'to' tokens must be non-blank";
-            task = new Event(desc, from, to);
-            break;
-        }
-        default:
-            throw new RuntimeException("Unknown task type '" + type + "' in line: " + line);
-        }
+        Task task = createTaskFromParts(type, desc, parts, line);
 
-        if (done) {
+        if (isDoneFlag) {
             task.markAsDone();
         }
 
@@ -197,11 +162,49 @@ public class Storage {
         return task;
     }
 
+    private Task createTaskFromParts(String type, String desc, String[] parts, String rawLine) {
+        switch (type) {
+        case "T":
+            return new ToDo(desc);
+        case "D":
+            return createDeadline(desc, parts, rawLine);
+        case "E":
+            return createEvent(desc, parts, rawLine);
+        default:
+            throw new RuntimeException("Unknown task type '" + type + "' in line: " + rawLine);
+        }
+    }
+
+    private Task createDeadline(String desc, String[] parts, String rawLine) {
+        if (parts.length < 4) {
+            throw new RuntimeException("Deadline missing due date: " + rawLine);
+        }
+        String[] dateTime = parts[3].trim().split("\\s+", 2);
+        String date = dateTime[0];
+        String time = (dateTime.length == 2) ? dateTime[1] : "00:00";
+        assert !date.isBlank() && !time.isBlank() : "Deadline date/time tokens must be non-blank";
+        return new Deadline(desc, date, time);
+    }
+
+    private Task createEvent(String desc, String[] parts, String rawLine) {
+        if (parts.length < 4) {
+            throw new RuntimeException("Event missing start/end: " + rawLine);
+        }
+        String[] range = parts[3].trim().split("\\s+-\\s+", 2);
+        if (range.length < 2) {
+            throw new RuntimeException("Event start/end should be 'from - to': " + rawLine);
+        }
+        String from = range[0].trim();
+        String to = range[1].trim();
+        assert !from.isBlank() && !to.isBlank() : "Event 'from' and 'to' tokens must be non-blank";
+        return new Event(desc, from, to);
+    }
+
     /**
      * Parses the done flag from the file format.
      *
      * @param s {@code "0"} for not done, {@code "1"} for done (whitespace allowed)
-     * @return {@code true} if done, {@code false} if not done
+     * @return {@code true} if is done, {@code false} if not done
      * @throws RuntimeException if the flag is not {@code "0"} or {@code "1"}
      */
     private boolean parseDone(String s) {
