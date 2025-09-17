@@ -55,3 +55,12 @@ If further AI-assisted changes are made, update this file with the date, files, 
 - Rationale: Maintain backward compatibility with existing tests and storage format.
 - Verification: `./gradlew test` and `./gradlew check` both pass after changes.
 
+### Level 8: Dates and Times (Event validation)
+- Files: `src/main/java/boyd/tasks/Event.java`, `src/main/java/boyd/utils/Parser.java`, `src/main/java/boyd/utils/Storage.java`
+- Changes:
+  - `Event` now stores start/end as `LocalDateTime` and validates input using the same `uuuu-MM-dd HH:mm` format used for `Deadline`.
+  - `Parser` surfaces invalid event datetime input as a user-friendly error.
+  - `Storage` continues to persist events as `E | done | desc | yyyy-MM-dd HH:mm - yyyy-MM-dd HH:mm`.
+- Rationale: Align event datetime handling with deadlines and reject invalid inputs like `/from 2 /to 3`.
+- Verification: Unit tests and Checkstyle pass.
+

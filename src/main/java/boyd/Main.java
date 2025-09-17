@@ -39,7 +39,10 @@ public class Main extends Application {
             assert controller != null : "MainWindow controller should be present";
             controller.setBoyd(boyd);
 
-            stage.setScene(new Scene(root));
+            Scene scene = new Scene(root);
+            // Attach stylesheet programmatically to avoid FXML URL resolution issues.
+            scene.getStylesheets().add(Main.class.getResource("/view/styles.css").toExternalForm());
+            stage.setScene(scene);
             stage.setTitle("Boyd");
             stage.show();
         } catch (IOException e) {

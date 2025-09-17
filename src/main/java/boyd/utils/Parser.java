@@ -262,7 +262,12 @@ public final class Parser {
             }
             String from = toSplit[0].trim(); // "yyyy-MM-dd HH:mm"
             String to = toSplit[1].trim(); // "yyyy-MM-dd HH:mm"
-            task = new Event(eventDesc, from, to); // let Event validate/parse
+            // Event constructor validates datetime format; surface as user-facing error.
+            try {
+                task = new Event(eventDesc, from, to);
+            } catch (DateTimeParseException e) {
+                throw new BoydException("Datetime format must be: yyyy-MM-dd HH:mm.");
+            }
             return task;
         }
         default -> throw new BoydException("Unknown command: " + parts[0]);

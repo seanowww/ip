@@ -2,7 +2,6 @@ package boyd;
 
 import java.util.ArrayList;
 
-import boyd.exceptions.BoydException;
 import boyd.utils.BoydResponse;
 import boyd.utils.Parser;
 import boyd.utils.Storage;
@@ -39,7 +38,8 @@ public class Boyd {
         TaskList loaded;
         try {
             loaded = new TaskList(STORAGE.load(DEFAULT_SAVE_PATH), STORAGE);
-        } catch (BoydException e) {
+        } catch (RuntimeException e) {
+            // Malformed/legacy save data: start with an empty list instead of failing to launch.
             loaded = new TaskList(new ArrayList<>(), STORAGE);
         }
         assert loaded != null : "TaskList must not be null";
@@ -62,7 +62,8 @@ public class Boyd {
         TaskList loaded;
         try {
             loaded = new TaskList(STORAGE.load(filePath), STORAGE);
-        } catch (BoydException e) {
+        } catch (RuntimeException e) {
+            // Malformed/legacy save data: start with an empty list instead of failing to launch.
             loaded = new TaskList(new ArrayList<>(), STORAGE);
         }
         assert loaded != null : "TaskList must not be null";
